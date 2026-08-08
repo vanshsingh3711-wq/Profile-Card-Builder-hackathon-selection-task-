@@ -18,8 +18,8 @@ interface Props {
 
 const STYLE_LABELS: { id: CardStyle; label: string }[] = [
   { id: 'editorial', label: 'Editorial' },
-  { id: 'terminal',  label: 'Terminal'  },
-  { id: 'goa',       label: 'Goa'       },
+  { id: 'terminal', label: 'Terminal' },
+  { id: 'goa', label: 'Goa' },
 ];
 
 export const ResultScreen: React.FC<Props> = ({
@@ -31,11 +31,11 @@ export const ResultScreen: React.FC<Props> = ({
 }) => {
   const exportCardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [isSharing,   setIsSharing]   = useState(false);
-  const [toast,       setToast]       = useState<ToastProps | null>(null);
-  const [isEditing,   setIsEditing]   = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [toast, setToast] = useState<ToastProps | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [editProfile, setEditProfile] = useState<BuilderProfile>(profile);
-  const [stackInput,  setStackInput]  = useState('');
+  const [stackInput, setStackInput] = useState('');
 
   const showToast = (message: string, type: 'error' | 'success') => {
     setToast({ message, type });
@@ -85,7 +85,10 @@ export const ResultScreen: React.FC<Props> = ({
       const { id } = await response.json();
       const shareUrl = `${window.location.origin}/share/${id}`;
       const text = `ID Secured for Hacker House Goa 2026.\n\nWho else is building?\n\n#FrameInGoa\n\n${shareUrl}`;
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(
+        `https://x.com/intent/post?text=${encodeURIComponent(text)}`,
+        '_blank'
+      );
     } catch (err) {
       console.error(err);
       showToast('Failed to connect to X. Try downloading instead.', 'error');
@@ -188,7 +191,7 @@ export const ResultScreen: React.FC<Props> = ({
                   {/* Decorative barcode */}
                   <div className="absolute top-0 right-0 flex items-start">
                     <div className="flex h-4 gap-0.5 mt-2 mr-4 opacity-40">
-                      {[1,3,1,2,4,1,2,1,3,1].map((w, i) => (
+                      {[1, 3, 1, 2, 4, 1, 2, 1, 3, 1].map((w, i) => (
                         <div key={i} className="h-full bg-hh-yellow" style={{ width: `${w * 2}px` }} />
                       ))}
                     </div>
@@ -213,10 +216,10 @@ export const ResultScreen: React.FC<Props> = ({
                       <div className="flex flex-wrap gap-2">
                         {profile.stack?.length > 0
                           ? profile.stack.map(t => (
-                              <span key={t} className="px-3 py-1 bg-transparent border border-hh-pink text-hh-pink font-mono text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(255,20,147,0.5)]">
-                                {t}
-                              </span>
-                            ))
+                            <span key={t} className="px-3 py-1 bg-transparent border border-hh-pink text-hh-pink font-mono text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(255,20,147,0.5)]">
+                              {t}
+                            </span>
+                          ))
                           : <span className="text-white/30 font-mono text-xs">—</span>}
                       </div>
                     </div>
