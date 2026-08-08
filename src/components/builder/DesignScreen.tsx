@@ -60,32 +60,16 @@ export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack
           >
             {/* Card thumbnail */}
             <div
-              className={`relative overflow-hidden transition-all duration-300 w-full
+              className={`relative overflow-hidden transition-all duration-300 w-full aspect-[4/5] rounded-sm
                 ${selected === id
                   ? 'ring-4 ring-hh-yellow ring-offset-2 ring-offset-[#0A4226] scale-[1.02]'
                   : 'ring-1 ring-hh-cream/10 opacity-70 hover:opacity-100 hover:ring-hh-yellow/40'}`}
-              style={{ aspectRatio: '4/5' }}
             >
-              {/* Render BuilderCard at thumbnail scale */}
-              <div
-                className="absolute top-0 left-0 origin-top-left"
-                style={{
-                  // We scale a 420px-wide card into the container width at runtime.
-                  // Use transform + fixed inner width so the card renders at full quality
-                  // and is scaled down via CSS only.
-                  width: '420px',
-                  height: '525px',
-                  transform: 'scale(var(--thumb-scale))',
-                  // The CSS variable is set inline on parent below (server-safe fallback)
-                } as React.CSSProperties}
-              >
-                <BuilderCard profile={profile} style={id} />
-              </div>
-              {/* Transparent click target */}
-              <div className="absolute inset-0 z-10" />
+              <BuilderCard profile={profile} style={id} />
+              
               {/* Selection indicator */}
               {selected === id && (
-                <div className="absolute top-2 right-2 z-20 w-6 h-6 bg-hh-yellow flex items-center justify-center">
+                <div className="absolute top-3 right-3 z-30 w-6 h-6 bg-hh-yellow rounded-full shadow-md flex items-center justify-center">
                   <div className="w-2 h-2 bg-[#0A4226] rounded-full" />
                 </div>
               )}
@@ -99,13 +83,6 @@ export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack
           </button>
         ))}
       </div>
-
-      {/* Note about scaling */}
-      <style>{`
-        [data-card-thumb] > div {
-          --thumb-scale: calc(var(--thumb-width, 280) / 420);
-        }
-      `}</style>
 
       {/* CTA */}
       <div className="flex flex-col gap-3">

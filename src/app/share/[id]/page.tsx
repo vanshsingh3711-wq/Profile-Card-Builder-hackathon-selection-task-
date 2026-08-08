@@ -1,28 +1,29 @@
-import { Metadata, ResolvingMetadata } from 'next';
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
+};
+
+function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
 }
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  
-  // Construct absolute URL for OG image
-  // In production, this would be your actual domain
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const imageUrl = `${baseUrl}/shares/${id}.png`;
+  const baseUrl = getBaseUrl();
+  const imageUrl = `${baseUrl}/api/share-image/${id}`;
 
   return {
     title: 'Hacker House Goa 2026 — Builder Identity',
-    description: 'Meet a builder heading to Hacker House Goa 2026.',
+    description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
     openGraph: {
       title: 'Hacker House Goa 2026 — Builder Identity',
-      description: 'Meet a builder heading to Hacker House Goa 2026.',
+      description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
       images: [
         {
           url: imageUrl,
@@ -35,7 +36,7 @@ export async function generateMetadata(
     twitter: {
       card: 'summary_large_image',
       title: 'Hacker House Goa 2026 — Builder Identity',
-      description: 'Meet a builder heading to Hacker House Goa 2026.',
+      description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
       images: [imageUrl],
     },
   };
@@ -43,12 +44,13 @@ export async function generateMetadata(
 
 export default async function SharePage({ params }: Props) {
   const { id } = await params;
+  const imageEndpoint = `/api/share-image/${id}`;
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-hh-green text-hh-cream relative overflow-hidden bg-pattern">
       <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-hh-pink/10 blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-hh-yellow/10 blur-3xl pointer-events-none" />
-      
+
       <div className="z-10 flex flex-col items-center max-w-2xl w-full">
         <h1 className="font-bodoni text-3xl md:text-5xl text-hh-yellow uppercase text-center mb-2">
           Builder Identity
@@ -59,12 +61,13 @@ export default async function SharePage({ params }: Props) {
 
         <div className="relative w-full max-w-[400px] mb-8 shadow-2xl shadow-black/50 border border-hh-yellow/20">
           <Image
-            src={`/shares/${id}.png`}
+            src={imageEndpoint}
             alt="Builder Card"
             width={800}
             height={1000}
-            className="w-full h-auto"
+            className="w-full h-auto object-contain"
             priority
+            unoptimized
           />
         </div>
 
@@ -76,7 +79,7 @@ export default async function SharePage({ params }: Props) {
             Create Your Own
           </Link>
           <a
-            href={`/shares/${id}.png`}
+            href={imageEndpoint}
             download={`HH-Goa-2026-${id}.png`}
             className="flex-1 flex items-center justify-center px-6 py-4 bg-hh-pink text-white font-bold uppercase tracking-wider text-sm hover:bg-pink-600 transition-colors text-center"
           >

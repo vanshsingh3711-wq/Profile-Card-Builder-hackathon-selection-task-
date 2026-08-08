@@ -16,23 +16,35 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
   const [manual, setManual] = useState({ name: '', role: '', builderTitle: '' });
   const [stackInput, setStackInput] = useState('');
   const [stack, setStack] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const addStack = () => {
     const tag = stackInput.trim().toUpperCase();
-    if (tag && !stack.includes(tag) && stack.length < 4) {
+    if (tag && !stack.includes(tag) && stack.length < 5) {
       setStack((prev) => [...prev, tag]);
       setStackInput('');
+      setError(null);
     }
   };
 
   const removeStack = (tag: string) => setStack((prev) => prev.filter((t) => t !== tag));
 
   const submitManual = () => {
+    const trimmedName = manual.name.trim();
+    const trimmedRole = manual.role.trim();
+    const trimmedTitle = manual.builderTitle.trim();
+
+    if (!trimmedName || !trimmedRole || !trimmedTitle || stack.length === 0) {
+      setError('Please fill in your Name, Role, at least 1 Stack item, and Builder Title to proceed.');
+      return;
+    }
+
+    setError(null);
     onProfileGenerated({
-      name: manual.name || 'BUILDER',
-      role: manual.role || 'BUILDER',
-      stack: stack.length > 0 ? stack : ['CODE', 'CRAFT'],
-      builderTitle: manual.builderTitle || 'BUILDER IN THE MAKING',
+      name: trimmedName,
+      role: trimmedRole,
+      stack: stack,
+      builderTitle: trimmedTitle,
     });
   };
 
@@ -48,7 +60,7 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
         </button>
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-hh-yellow/30" />
-          <span className="font-mono text-xs uppercase tracking-[0.3em] text-hh-yellow">Step 02 / 03</span>
+          <span className="font-mono text-xs uppercase tracking-[0.3em] text-hh-yellow">Step 02 / 04</span>
           <div className="h-px flex-1 bg-hh-yellow/30" />
         </div>
         <h2 className="font-bodoni text-4xl md:text-6xl text-hh-cream uppercase leading-none">
@@ -139,9 +151,15 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
             />
           </div>
 
+          {error && (
+            <div className="p-3 bg-hh-pink/20 border border-hh-pink text-hh-pink font-mono text-xs uppercase tracking-wider text-center">
+              {error}
+            </div>
+          )}
+
           <button
             onClick={submitManual}
-            className="w-full py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-colors mt-4"
+            className="w-full py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-colors mt-2"
           >
             Generate Frame →
           </button>

@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 import { BuilderProfile, CardStyle } from '@/types/builder';
-import { PhotoScreen }    from './PhotoScreen';
+import { PhotoScreen }    from '../upload/PhotoScreen';
 import { IdentityScreen } from './IdentityScreen';
 import { DesignScreen }   from './DesignScreen';
 import { ResultScreen }   from './ResultScreen';
@@ -41,6 +41,17 @@ export const BuilderFlow = () => {
   const [profile,   setProfile]   = useState<BuilderProfile>(EMPTY_PROFILE);
   const [cardStyle, setCardStyle] = useState<CardStyle>('editorial');
 
+  const isProfileComplete = (p: BuilderProfile): boolean => {
+    return Boolean(
+      p.photo &&
+      p.name?.trim() &&
+      p.role?.trim() &&
+      p.stack &&
+      p.stack.length > 0 &&
+      p.builderTitle?.trim()
+    );
+  };
+
   // ── handlers ─────────────────────────────────────────────────────────────
 
   const handlePhotoSelected = (photoUrl: string) => {
@@ -51,17 +62,26 @@ export const BuilderFlow = () => {
   // Called when AI (or manual form) produces a complete profile
   // → go to design selection, not directly to result
   const handleProfileGenerated = (partial: Partial<BuilderProfile>) => {
-    setProfile(prev => ({ ...prev, ...partial }));
-    setStep('design');
+    const updated = { ...profile, ...partial };
+    setProfile(updated);
+    if (isProfileComplete(updated)) {
+      setStep('design');
+    }
   };
 
   const handleStyleSelected = (style: CardStyle) => {
+    if (!isProfileComplete(profile)) {
+      setStep(profile.photo ? 'identity' : 'photo');
+      return;
+    }
     setCardStyle(style);
     setStep('result');
   };
 
   const handleEditProfile = (updated: BuilderProfile) => {
-    setProfile(updated);
+    if (isProfileComplete(updated)) {
+      setProfile(updated);
+    }
   };
 
   const handleRestart = () => {
@@ -73,31 +93,32 @@ export const BuilderFlow = () => {
   // ── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full min-h-screen px-4 py-8 md:px-8 md:py-12 bg-[#0A4226]">
+    <div className="w-full min-h-screen px-4 py-4 md:px-8 md:py-8 bg-[#0A4226]">
       {/* Top navigation */}
-      <div className="flex items-center justify-between mb-12 max-w-6xl mx-auto w-full">
+      <div className="flex items-center justify-between gap-4 mb-8 md:mb-12 max-w-6xl mx-auto w-full px-2">
         <Link
           href="/"
-          className="flex items-center gap-2 text-hh-cream/50 hover:text-hh-yellow text-xs uppercase tracking-widest font-mono transition-colors"
+          className="flex items-center gap-2 text-hh-cream/50 hover:text-hh-yellow text-xs uppercase tracking-widest font-mono transition-colors shrink-0"
         >
-          <ArrowLeft className="w-3 h-3" /> Home
+          <ArrowLeft className="w-3.5 h-3.5" /> Home
         </Link>
 
         {/* HH Goa logo lockup */}
-        <div className="relative flex justify-center items-center w-[200px] md:w-[280px]">
+        <div className="relative flex justify-center items-center w-[140px] sm:w-[170px] md:w-[200px] max-w-full shrink-0">
           <Image
             src="/branding/Hacker house.png"
             alt="HACKER HOUSE"
-            width={300}
-            height={80}
+            width={200}
+            height={55}
             className="w-full h-auto object-contain drop-shadow-md"
+            priority
           />
           <Image
             src="/branding/goa_hindi.svg"
             alt="GOA"
-            width={80}
-            height={40}
-            className="absolute z-10 w-[26%] top-[48%] left-[48%] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(255,20,147,0.5)]"
+            width={50}
+            height={25}
+            className="absolute z-10 w-[24%] top-[48%] left-[48%] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(255,20,147,0.5)]"
           />
         </div>
       </div>

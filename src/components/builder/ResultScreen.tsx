@@ -337,7 +337,7 @@ export const ResultScreen: React.FC<Props> = ({
     if (
       tag &&
       !editProfile.stack.includes(tag) &&
-      editProfile.stack.length < 4
+      editProfile.stack.length < 5
     ) {
       setEditProfile((p) => ({
         ...p,
@@ -364,7 +364,26 @@ export const ResultScreen: React.FC<Props> = ({
   };
 
   const saveEdit = () => {
-    onEditProfile(editProfile);
+    if (
+      !editProfile.name?.trim() ||
+      !editProfile.role?.trim() ||
+      !editProfile.builderTitle?.trim() ||
+      !editProfile.stack ||
+      editProfile.stack.length === 0
+    ) {
+      showToast(
+        'All fields (Name, Role, Stack, Title) are required to save changes.',
+        'error'
+      );
+      return;
+    }
+
+    onEditProfile({
+      ...editProfile,
+      name: editProfile.name.trim(),
+      role: editProfile.role.trim(),
+      builderTitle: editProfile.builderTitle.trim(),
+    });
     setIsEditing(false);
   };
 

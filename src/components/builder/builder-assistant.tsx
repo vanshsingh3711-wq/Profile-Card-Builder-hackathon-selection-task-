@@ -75,13 +75,22 @@ export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGen
     setSelectedTitle(title);
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleUseTitleAndBuild = () => {
     if (!selectedTitle) return;
     const { profile } = aiState;
+
+    if (!profile.name?.trim() || !profile.role?.trim() || !profile.stack || profile.stack.length === 0) {
+      setError("Please tell Studio AI your Name, Role, and Tech Stack in the chat before building your card!");
+      return;
+    }
+
+    setError(null);
     onProfileGenerated({
-      name: profile.name || 'BUILDER',
-      role: profile.role || 'BUILDER',
-      stack: profile.stack.length > 0 ? profile.stack : ['CODE', 'CRAFT'],
+      name: profile.name.trim(),
+      role: profile.role.trim(),
+      stack: profile.stack,
       builderTitle: selectedTitle,
     });
   };
@@ -140,6 +149,12 @@ export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGen
                 </button>
               ))}
             </div>
+
+            {error && (
+              <div className="p-3 bg-hh-pink/20 border border-hh-pink text-hh-pink font-mono text-xs uppercase tracking-wider text-center">
+                {error}
+              </div>
+            )}
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mt-2">

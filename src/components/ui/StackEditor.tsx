@@ -29,7 +29,7 @@ export const StackEditor: React.FC<StackEditorProps> = ({
   return (
     <div className="flex flex-col gap-2">
       <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
-        Stack <span className="text-white/30">· up to 4</span>
+        Stack <span className="text-white/30">· up to 5</span>
       </label>
       <div className="flex gap-3">
         <input
@@ -42,7 +42,7 @@ export const StackEditor: React.FC<StackEditorProps> = ({
         />
         <button
           onClick={onAdd}
-          disabled={!stackInput.trim() || stack.length >= 4}
+          disabled={!stackInput.trim() || stack.length >= 5}
           className="px-6 py-2 bg-hh-yellow text-[#0A4226] font-mono text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-30 border-2 border-hh-yellow"
         >
           Add
