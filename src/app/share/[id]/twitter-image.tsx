@@ -12,10 +12,11 @@ type Props = {
 
 export default async function Image({ params }: Props) {
   const { id } = await params;
-  const { profile } = await getSharedProfile(id);
+  const result = await getSharedProfile(id);
 
   // If no profile found, render a fallback error card or generic card
-  if (!profile) {
+  if (!result.ok) {
+    const isNotFound = result.error === 'not_found';
     return new ImageResponse(
       (
         <div
@@ -34,8 +35,13 @@ export default async function Image({ params }: Props) {
         >
           HACKER HOUSE GOA 2026
           <div style={{ color: '#FF1493', marginTop: 20, fontSize: '32px' }}>
-            Builder Profile Not Found
+            {isNotFound ? 'Builder Profile Not Found' : 'Profile Unavailable'}
           </div>
+          {!isNotFound && (
+            <div style={{ color: 'rgba(255,255,255,0.7)', marginTop: 20, fontSize: '20px' }}>
+              {result.message}
+            </div>
+          )}
         </div>
       ),
       {
@@ -44,7 +50,7 @@ export default async function Image({ params }: Props) {
     );
   }
 
-  const { name, role, builderTitle, stack, photo } = profile;
+  const { name, role, builderTitle, stack, photo } = result.profile;
 
   return new ImageResponse(
     (

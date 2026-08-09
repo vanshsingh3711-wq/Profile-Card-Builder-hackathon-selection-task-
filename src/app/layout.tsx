@@ -21,7 +21,8 @@ export const metadata: Metadata = {
   // CRITICAL: Next.js needs a metadataBase to resolve relative paths for OG/Twitter images
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"))
   ),
   openGraph: {
     title: "Hacker House Goa 2026 — Builder Identity",

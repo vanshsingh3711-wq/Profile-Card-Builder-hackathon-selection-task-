@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import { put } from '@vercel/blob';
 
 export async function POST(req: NextRequest) {
@@ -13,23 +12,34 @@ export async function POST(req: NextRequest) {
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(base64Data, 'base64');
 
-    // 1. Try Vercel Blob if BLOB_READ_WRITE_TOKEN is configured in Vercel environment
+    const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+
+    // 1. Try Vercel Blob if BLOB_READ_WRITE_TOKEN is configured
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        await put(`shares/${id}.png`, buffer, { access: 'public' });
+        const imageBlob = await put(`shares/${id}.png`, buffer, { access: 'public' });
         if (profile) {
-          await put(`shares/${id}.json`, JSON.stringify(profile), { access: 'public' });
+          // Store the generated image URL in the profile for easy access by the share page
+          const profileWithImage = { ...profile, photo: imageBlob.url };
+          await put(`shares/${id}.json`, JSON.stringify(profileWithImage), { access: 'public' });
         }
         return NextResponse.json({ id });
       } catch (blobErr) {
-        console.warn('Vercel Blob store failed, using filesystem fallback:', blobErr);
+        console.error('Vercel Blob store failed:', blobErr);
+        // Fail explicitly in production instead of silently falling to /tmp
+        if (isVercel) {
+           return NextResponse.json({ error: 'Storage failure' }, { status: 500 });
+        }
       }
     }
     
-    // 2. Vercel serverless / tmp directory fallback for read-only filesystem
-    const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
-    const baseDir = isVercel ? os.tmpdir() : path.join(process.cwd(), 'public');
-    const sharesDir = path.join(baseDir, 'shares');
+    // 2. Local dev fallback (ONLY if not on Vercel)
+    if (isVercel) {
+       console.error('Missing BLOB_READ_WRITE_TOKEN in Vercel environment');
+       return NextResponse.json({ error: 'Storage configuration error' }, { status: 500 });
+    }
+
+    const sharesDir = path.join(process.cwd(), 'public', 'shares');
     
     // Ensure directory exists
     try {
