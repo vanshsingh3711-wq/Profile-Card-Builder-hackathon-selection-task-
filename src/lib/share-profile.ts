@@ -100,13 +100,17 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
     return { ok: false, error: 'not_found', message: `Invalid share ID: "${rawId}"` };
   }
 
+  console.log(`[share-profile] LOOKUP_START id=${id}`);
+
   // ── 1. Vercel Blob ──────────────────────────────────────────────
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  const hasBlobConfig = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  if (hasBlobConfig) {
     try {
       // Deterministic JSON lookup via get()
       const jsonResult = await get(`shares/${id}.json`, { access: 'public' });
 
       if (!jsonResult) {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=JSON_NOT_FOUND`);
         return {
           ok: false,
           error: 'not_found',
@@ -114,7 +118,10 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
+      console.log(`[share-profile] JSON_FOUND=true id=${id}`);
+
       if (jsonResult.statusCode !== 200 || !jsonResult.stream) {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=STORAGE_ERROR status=${jsonResult.statusCode}`);
         return {
           ok: false,
           error: 'storage_error',
@@ -147,6 +154,7 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       try {
         profile = JSON.parse(jsonText);
       } catch {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=JSON_MALFORMED`);
         return {
           ok: false,
           error: 'malformed',
@@ -155,6 +163,7 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       }
 
       if (!isValidProfile(profile)) {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=JSON_INVALID`);
         return {
           ok: false,
           error: 'malformed',
@@ -168,6 +177,7 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       // Determine image URL — prefer blob URL, fall back to photo in profile
       const imageUrl = imgBlob?.url || profile.photo || '';
       if (!imageUrl) {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=IMAGE_MISSING`);
         return {
           ok: false,
           error: 'image_missing',
@@ -175,10 +185,14 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
+      console.log(`[share-profile] IMAGE_FOUND=true id=${id}`);
+      console.log(`[share-profile] LOOKUP_SUCCESS id=${id}`);
+
       return { ok: true, profile, imageUrl };
     } catch (err) {
       // BlobNotFoundError from the JSON get() means the share doesn't exist
       if (err instanceof BlobNotFoundError) {
+        console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=BLOB_NOT_FOUND_ERROR`);
         return {
           ok: false,
           error: 'not_found',
@@ -187,6 +201,7 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       }
 
       console.error(`[share-profile] Blob storage error for ID ${id}:`, err);
+      console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=BLOB_UNAVAILABLE`);
       return {
         ok: false,
         error: 'blob_unavailable',
@@ -199,11 +214,12 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
   const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
   if (isVercel) {
     // On Vercel without BLOB_READ_WRITE_TOKEN — this is a config error
-    console.error('[share-profile] Running on Vercel but BLOB_READ_WRITE_TOKEN is not set');
+    console.error('[share-profile] Running on Vercel but BLOB_READ_WRITE_TOKEN and BLOB_STORE_ID are not set');
+    console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=MISSING_TOKEN_ON_VERCEL`);
     return {
       ok: false,
       error: 'blob_unavailable',
-      message: 'Vercel Blob is not configured (BLOB_READ_WRITE_TOKEN missing)',
+      message: 'Vercel Blob is not configured (BLOB_READ_WRITE_TOKEN and BLOB_STORE_ID missing)',
     };
   }
 
@@ -256,8 +272,10 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       };
     }
 
+    console.log(`[share-profile] LOOKUP_SUCCESS id=${id} (local)`);
     return { ok: true, profile, imageUrl };
   } catch {
+    console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=LOCAL_NOT_FOUND`);
     return {
       ok: false,
       error: 'not_found',

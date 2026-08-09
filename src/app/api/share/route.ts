@@ -9,8 +9,9 @@ export async function POST(req: NextRequest) {
   // ── Environment diagnostics (never log actual secrets) ──
   const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
   const vercelEnv = process.env.VERCEL_ENV || 'local'; // 'production' | 'preview' | 'development' | 'local'
-  const hasBlobToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-  console.log(`[api/share] ENV: isVercel=${isVercel}, vercelEnv=${vercelEnv}, hasBlobToken=${hasBlobToken}`);
+  const blobAuthMode = process.env.BLOB_STORE_ID ? 'oidc' : (process.env.BLOB_READ_WRITE_TOKEN ? 'token' : 'none');
+  const hasBlobConfig = blobAuthMode !== 'none';
+  console.log(`[api/share] ENV: isVercel=${isVercel}, vercelEnv=${vercelEnv}, blobAuthMode=${blobAuthMode}, hasBlobConfig=${hasBlobConfig}`);
 
   try {
     console.log("[api/share] REQUEST_RECEIVED");
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     console.log(`[api/share] IMAGE_BUFFER_SIZE: ${buffer.length} bytes`);
 
     // ── 1. Vercel Blob (production storage) ──
-    if (hasBlobToken) {
+    if (hasBlobConfig) {
       console.log("[api/share] BEFORE_BLOB");
 
       // Atomic upload: both image and JSON must succeed, or we clean up.
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
     
     // ── 2. Vercel without token — configuration error ──
     if (isVercel) {
-       console.error('[api/share] Missing BLOB_READ_WRITE_TOKEN in Vercel environment');
+       console.error('[api/share] Missing BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID in Vercel environment');
        return NextResponse.json({ error: 'Storage configuration error', code: 'MISSING_TOKEN' }, { status: 500 });
     }
 
