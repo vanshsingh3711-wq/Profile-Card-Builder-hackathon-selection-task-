@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { SubjectBox } from '@/types/builder';
 import { CropControls } from './CropControls';
-import { CardPhotoPreview } from './CardPhotoPreview';
 import { autoFrameSubject } from '@/lib/image/autoFrameSubject';
 import { cropImage, PixelCrop } from '@/lib/image/cropImage';
 import { Loader2 } from 'lucide-react';
@@ -81,21 +80,19 @@ export const PhotoCropEditor: React.FC<PhotoCropEditorProps> = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 animate-in fade-in duration-500">
-      {/* LEFT COLUMN: EDITOR */}
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="text-left mb-2 flex justify-between items-end">
-          <div>
-            <h2 className="font-bodoni text-3xl md:text-4xl text-hh-yellow uppercase">
-              Adjust Your Frame
-            </h2>
-            <p className="font-mono text-xs text-hh-cream/50 uppercase tracking-widest mt-1">
-              Position your subject exactly how you want them.
-            </p>
-          </div>
+    <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 animate-in fade-in duration-500">
+      {/* EDITOR */}
+      <div className="flex flex-col gap-4">
+        <div className="text-center mb-2 flex flex-col items-center gap-2">
           <span className="font-mono text-[10px] font-bold text-hh-yellow uppercase tracking-widest border border-hh-yellow/30 bg-hh-yellow/10 px-2.5 py-1">
             Circle Frame
           </span>
+          <h2 className="font-bodoni text-3xl md:text-4xl text-hh-yellow uppercase mt-2">
+            Adjust Your Frame
+          </h2>
+          <p className="font-mono text-xs text-hh-cream/50 uppercase tracking-widest mt-1">
+            Position your subject exactly how you want them.
+          </p>
         </div>
 
         <div className="relative w-full max-w-[420px] aspect-square mx-auto bg-black border-2 border-hh-yellow/40 rounded-sm overflow-hidden shadow-2xl">
@@ -128,13 +125,8 @@ export const PhotoCropEditor: React.FC<PhotoCropEditorProps> = ({
         />
       </div>
 
-      {/* RIGHT COLUMN: PREVIEWS & ACTIONS */}
-      <div className="w-full lg:w-[320px] xl:w-[400px] shrink-0 flex flex-col justify-between gap-8 pt-2">
-        <CardPhotoPreview 
-          imageSrc={imageSrc} 
-          cropPixels={croppedAreaPixels} 
-        />
-        
+      {/* ACTIONS */}
+      <div className="w-full max-w-[420px] mx-auto mt-2">
         <button
           onClick={handleConfirm}
           disabled={isProcessing || !croppedAreaPixels}

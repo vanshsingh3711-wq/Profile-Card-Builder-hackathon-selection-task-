@@ -15,7 +15,7 @@
  *   cardStyle   — 'editorial' | 'terminal' | 'goa'
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -40,6 +40,15 @@ export const BuilderFlow = () => {
   const [step,      setStep]      = useState<Step>('photo');
   const [profile,   setProfile]   = useState<BuilderProfile>(EMPTY_PROFILE);
   const [cardStyle, setCardStyle] = useState<CardStyle>('editorial');
+
+  // Reset scroll position to top when switching steps
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant',
+    });
+  }, [step]);
 
   const isProfileComplete = (p: BuilderProfile): boolean => {
     return Boolean(
