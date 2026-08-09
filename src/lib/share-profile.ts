@@ -83,7 +83,7 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       const { blobs } = await list({ prefix: `shares/${id}.`, limit: 10 });
 
       const jsonBlob = blobs.find((b) => b.pathname === `shares/${id}.json`);
-      const pngBlob = blobs.find((b) => b.pathname === `shares/${id}.png`);
+      const imgBlob = blobs.find((b) => b.pathname === `shares/${id}.jpeg` || b.pathname === `shares/${id}.jpg` || b.pathname === `shares/${id}.png`);
 
       if (!jsonBlob) {
         // Blob store is reachable but this share doesn't exist
@@ -123,13 +123,13 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
-      // Determine image URL — prefer pngBlob URL, fall back to photo in profile
-      const imageUrl = pngBlob?.url || profile.photo || '';
+      // Determine image URL — prefer imgBlob URL, fall back to photo in profile
+      const imageUrl = imgBlob?.url || profile.photo || '';
       if (!imageUrl) {
         return {
           ok: false,
           error: 'image_missing',
-          message: `No PNG blob or inline photo found for ID: ${id}`,
+          message: `No image blob or inline photo found for ID: ${id}`,
         };
       }
 
@@ -158,7 +158,8 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
 
   // Local development — read from public/shares/
   const publicJsonPath = path.join(process.cwd(), 'public', 'shares', `${id}.json`);
-  const publicImgPath = path.join(process.cwd(), 'public', 'shares', `${id}.png`);
+  const publicImgPathJpeg = path.join(process.cwd(), 'public', 'shares', `${id}.jpeg`);
+  const publicImgPathPng = path.join(process.cwd(), 'public', 'shares', `${id}.png`);
 
   try {
     const file = await fs.readFile(publicJsonPath, 'utf8');
@@ -184,11 +185,16 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
     // Check if image file exists locally
     let imageUrl = '';
     try {
-      await fs.access(publicImgPath);
-      imageUrl = `/shares/${id}.png`;
+      await fs.access(publicImgPathJpeg);
+      imageUrl = `/shares/${id}.jpeg`;
     } catch {
-      // No local PNG — try inline photo from profile
-      imageUrl = profile.photo || '';
+      try {
+         await fs.access(publicImgPathPng);
+         imageUrl = `/shares/${id}.png`;
+      } catch {
+         // No local image — try inline photo from profile
+         imageUrl = profile.photo || '';
+      }
     }
 
     if (!imageUrl) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { toPng } from 'html-to-image';
+import { toJpeg } from 'html-to-image';
 
 import {
   Download,
@@ -120,14 +120,14 @@ export const ResultScreen: React.FC<Props> = ({
    * Export the EXACT visible preview card.
    *
    * We dynamically calculate pixelRatio so the output is
-   * approximately 1600px wide regardless of the preview width.
+   * approximately 1200px wide regardless of the preview width.
    *
    * Example:
    *
    * Preview = 420px wide
-   * Target = 1600px
+   * Target = 1200px
    *
-   * pixelRatio = 1600 / 420 = 3.81
+   * pixelRatio = 1200 / 420 = 2.85
    *
    * Because the source DOM is the actual preview,
    * layout and design remain identical.
@@ -170,21 +170,21 @@ export const ResultScreen: React.FC<Props> = ({
     }
 
     /*
-     * Target a 1600px-wide output.
+     * Target a 1200px-wide output (reduced from 1600px to keep payload size small).
      *
      * Since the card uses 4:5 aspect ratio,
-     * the output will be approximately 1600x2000.
+     * the output will be approximately 1200x1500.
      */
-    const targetWidth = 1600;
+    const targetWidth = 1200;
 
     const pixelRatio = Math.max(
       1,
       targetWidth / rect.width
     );
 
-    return toPng(element, {
+    return toJpeg(element, {
       pixelRatio,
-      quality: 1,
+      quality: 0.85,
 
       /*
        * Helps html-to-image handle cached images.
@@ -221,7 +221,7 @@ export const ResultScreen: React.FC<Props> = ({
         document.createElement('a');
 
       link.download =
-        `HH-Goa-2026-${safeName}.png`;
+        `HH-Goa-2026-${safeName}.jpg`;
 
       link.href = dataUrl;
 
