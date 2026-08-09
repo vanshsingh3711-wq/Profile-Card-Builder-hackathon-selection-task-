@@ -28,19 +28,14 @@ export const metadata: Metadata = {
     description: "Meet a builder heading to Hacker House Goa 2026. #FrameInGoa",
     type: "website",
     siteName: "HH Goa 2026 ID Generator",
-    images: [{
-      url: "/branding/Hacker house.png", // Default fallback for the homepage
-      width: 1200,
-      height: 630,
-      alt: "Hacker House Goa 2026 Branding",
-    }],
+    locale: "en_US",
+    // images are auto-provided by src/app/opengraph-image.tsx (special file convention)
   },
-  // CRITICAL FOR TASK REQUIREMENT: Forces X to show a full-width image preview
   twitter: {
     card: "summary_large_image",
     title: "Hacker House Goa 2026 — Builder Identity",
     description: "Get your official #FrameInGoa badge instantly.",
-    images: ["/branding/Hacker house.png"],
+    // images are auto-provided by src/app/twitter-image.tsx (special file convention)
   }
 };
 
