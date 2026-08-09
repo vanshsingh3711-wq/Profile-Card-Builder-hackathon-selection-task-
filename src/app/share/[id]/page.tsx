@@ -97,7 +97,7 @@ export default async function SharePage({ params }: Props) {
           </Link>
           <a
             href={imageUrl}
-            download={`HH-Goa-2026-${id}.png`}
+            download={`HH-Goa-2026-${id}.jpeg`}
             className="flex-1 flex items-center justify-center px-6 py-4 bg-hh-pink text-white font-bold uppercase tracking-wider text-sm hover:bg-pink-600 transition-colors text-center"
           >
             Download

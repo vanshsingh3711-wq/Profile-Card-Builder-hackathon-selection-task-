@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 
 export async function POST(req: NextRequest) {
   console.log("[api/share] ENTER");
-  
-  // STEP 4 - RETURN A SIMPLE TEST RESPONSE
-  // Bypass everything to see if Vercel routes the request properly
-  const testHeader = req.headers.get('x-diagnostic-bypass');
-  if (testHeader === 'true') {
-    return NextResponse.json({ test: true, status: 'ok' }, { status: 200 });
-  }
+
+  // ── Environment diagnostics (never log actual secrets) ──
+  const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+  const vercelEnv = process.env.VERCEL_ENV || 'local'; // 'production' | 'preview' | 'development' | 'local'
+  const hasBlobToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  console.log(`[api/share] ENV: isVercel=${isVercel}, vercelEnv=${vercelEnv}, hasBlobToken=${hasBlobToken}`);
 
   try {
     console.log("[api/share] REQUEST_RECEIVED");
     console.log("[api/share] BEFORE_PARSE");
     
-    // Check Content-Length to see request size
     const contentLength = req.headers.get('content-length');
     console.log(`[api/share] REQUEST_SIZE: ${contentLength} bytes`);
 
@@ -46,39 +44,55 @@ export async function POST(req: NextRequest) {
     
     console.log(`[api/share] IMAGE_BUFFER_SIZE: ${buffer.length} bytes`);
 
-    const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+    // ── 1. Vercel Blob (production storage) ──
+    if (hasBlobToken) {
+      console.log("[api/share] BEFORE_BLOB");
 
-    // 1. Try Vercel Blob if BLOB_READ_WRITE_TOKEN is configured
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      // Atomic upload: both image and JSON must succeed, or we clean up.
+      let imageBlobUrl: string | null = null;
+
       try {
-        console.log("[api/share] BEFORE_BLOB");
+        // Step 1: Upload image
         const imageBlob = await put(`shares/${id}.jpeg`, buffer, { access: 'public' });
-        if (profile) {
-          // Store the generated image URL in the profile for easy access by the share page
-          const profileWithImage = { ...profile, photo: imageBlob.url };
-          await put(`shares/${id}.json`, JSON.stringify(profileWithImage), { access: 'public' });
-        }
-        console.log("[api/share] AFTER_BLOB");
+        imageBlobUrl = imageBlob.url;
+        console.log("[api/share] IMAGE_UPLOADED");
+
+        // Step 2: Upload profile JSON (include the Blob image URL)
+        const profileWithImage = { ...profile, photo: imageBlobUrl };
+        await put(`shares/${id}.json`, JSON.stringify(profileWithImage), { access: 'public' });
+        console.log("[api/share] PROFILE_UPLOADED");
+
         console.log("[api/share] BEFORE_RESPONSE");
         return NextResponse.json({ id });
       } catch (blobErr) {
-        console.error('[api/share] Vercel Blob store failed:', blobErr);
-        // Fail explicitly in production instead of silently falling to /tmp
+        console.error('[api/share] Vercel Blob upload failed:', blobErr);
+
+        // Attempt cleanup of any partially uploaded blobs
+        if (imageBlobUrl) {
+          try {
+            await del(imageBlobUrl);
+            console.log("[api/share] CLEANUP: deleted orphaned image blob");
+          } catch (cleanupErr) {
+            console.error('[api/share] CLEANUP_FAILED: could not delete orphaned image blob:', cleanupErr);
+          }
+        }
+
+        // Fail explicitly — do not fall through to local storage on Vercel
         if (isVercel) {
-           return NextResponse.json({ error: 'Storage failure', code: 'BLOB_UPLOAD_FAILED' }, { status: 500 });
+          return NextResponse.json({ error: 'Storage failure', code: 'BLOB_UPLOAD_FAILED' }, { status: 500 });
         }
       }
     }
     
-    // 2. Local dev fallback (ONLY if not on Vercel)
+    // ── 2. Vercel without token — configuration error ──
     if (isVercel) {
        console.error('[api/share] Missing BLOB_READ_WRITE_TOKEN in Vercel environment');
        return NextResponse.json({ error: 'Storage configuration error', code: 'MISSING_TOKEN' }, { status: 500 });
     }
 
+    // ── 3. Local dev fallback: public/shares/ ──
     const sharesDir = path.join(process.cwd(), 'public', 'shares');
     
-    // Ensure directory exists
     try {
       await fs.access(sharesDir);
     } catch {

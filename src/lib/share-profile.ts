@@ -1,4 +1,4 @@
-import { list } from '@vercel/blob';
+import { head, get, BlobNotFoundError } from '@vercel/blob';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -58,13 +58,37 @@ function isValidProfile(obj: unknown): obj is SharedProfile {
   );
 }
 
+/**
+ * Deterministic head() lookup for the image blob.
+ *
+ * Tries .jpeg (canonical format) first, then .jpg and .png
+ * for backward compatibility with older shares.
+ *
+ * Returns the HeadBlobResult (with .url) or null.
+ */
+async function findImageBlob(id: string) {
+  const extensions = ['jpeg', 'jpg', 'png'];
+  for (const ext of extensions) {
+    try {
+      const result = await head(`shares/${id}.${ext}`);
+      return result;
+    } catch (err) {
+      if (err instanceof BlobNotFoundError) {
+        continue; // try next extension
+      }
+      throw err; // unexpected error — propagate
+    }
+  }
+  return null;
+}
+
 // ─── Main accessor ──────────────────────────────────────────────────
 
 /**
  * Retrieve a shared builder profile by ID.
  *
  * Resolution order:
- *  1. Vercel Blob (production)  — uses list() with prefix matching
+ *  1. Vercel Blob (production)  — uses deterministic head() / get() lookups
  *  2. public/shares/ (local dev only)
  *
  * /tmp is intentionally NOT used — it is ephemeral on Vercel
@@ -79,14 +103,10 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
   // ── 1. Vercel Blob ──────────────────────────────────────────────
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
-      // list() with prefix finds blobs by pathname — no need for full URLs
-      const { blobs } = await list({ prefix: `shares/${id}.`, limit: 10 });
+      // Deterministic JSON lookup via get()
+      const jsonResult = await get(`shares/${id}.json`, { access: 'public' });
 
-      const jsonBlob = blobs.find((b) => b.pathname === `shares/${id}.json`);
-      const imgBlob = blobs.find((b) => b.pathname === `shares/${id}.jpeg` || b.pathname === `shares/${id}.jpg` || b.pathname === `shares/${id}.png`);
-
-      if (!jsonBlob) {
-        // Blob store is reachable but this share doesn't exist
+      if (!jsonResult) {
         return {
           ok: false,
           error: 'not_found',
@@ -94,19 +114,38 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
-      // Fetch the JSON profile from the blob URL
-      const res = await fetch(jsonBlob.url, { cache: 'no-store' });
-      if (!res.ok) {
+      if (jsonResult.statusCode !== 200 || !jsonResult.stream) {
         return {
           ok: false,
           error: 'storage_error',
-          message: `Failed to fetch profile JSON from Blob (HTTP ${res.status})`,
+          message: `Unexpected response for profile JSON (status ${jsonResult.statusCode})`,
         };
       }
 
+      // Read the stream into a string
+      const chunks: Uint8Array[] = [];
+      const reader = jsonResult.stream.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+      }
+      const jsonText = new TextDecoder().decode(
+        chunks.length === 1
+          ? chunks[0]
+          : new Uint8Array(chunks.reduce((acc, c) => acc + c.length, 0)).map((_, i) => {
+              let offset = 0;
+              for (const chunk of chunks) {
+                if (i < offset + chunk.length) return chunk[i - offset];
+                offset += chunk.length;
+              }
+              return 0;
+            })
+      );
+
       let profile: unknown;
       try {
-        profile = await res.json();
+        profile = JSON.parse(jsonText);
       } catch {
         return {
           ok: false,
@@ -123,7 +162,10 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
-      // Determine image URL — prefer imgBlob URL, fall back to photo in profile
+      // Deterministic image lookup via head()
+      const imgBlob = await findImageBlob(id);
+
+      // Determine image URL — prefer blob URL, fall back to photo in profile
       const imageUrl = imgBlob?.url || profile.photo || '';
       if (!imageUrl) {
         return {
@@ -135,6 +177,15 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
 
       return { ok: true, profile, imageUrl };
     } catch (err) {
+      // BlobNotFoundError from the JSON get() means the share doesn't exist
+      if (err instanceof BlobNotFoundError) {
+        return {
+          ok: false,
+          error: 'not_found',
+          message: `No shared profile found in Blob for ID: ${id}`,
+        };
+      }
+
       console.error(`[share-profile] Blob storage error for ID ${id}:`, err);
       return {
         ok: false,
