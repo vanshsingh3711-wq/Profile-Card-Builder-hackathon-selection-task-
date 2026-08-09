@@ -265,6 +265,9 @@ export const ResultScreen: React.FC<Props> = ({
         );
       }
 
+      const payloadSize = dataUrl.length;
+      console.log(`[ResultScreen] Generating payload. Size: ${payloadSize} chars (~${Math.round(payloadSize * 0.75 / 1024)} KB)`);
+
       const response = await fetch(
         '/api/share',
         {
