@@ -1,8 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { head } from '@vercel/blob';
-import path from 'path';
-import fs from 'fs/promises';
-import os from 'os';
+import { getSharedProfile } from '@/lib/share-profile';
 
 export const runtime = 'nodejs'; // Use Node.js to allow fs access for fallback
 export const alt = 'Hacker House Goa 2026 - Builder Identity';
@@ -15,46 +12,7 @@ type Props = {
 
 export default async function Image({ params }: Props) {
   const { id } = await params;
-  const cleanId = id.replace(/\.png$/, '');
-  
-  let profile = null;
-
-  // 1. Try fetching JSON from Vercel Blob
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    try {
-      const blobInfo = await head(`shares/${cleanId}.json`);
-      if (blobInfo && blobInfo.url) {
-        const res = await fetch(blobInfo.url);
-        if (res.ok) {
-          profile = await res.json();
-        }
-      }
-    } catch (e) {
-      console.warn('Vercel Blob profile fetch failed, falling back to fs:', e);
-    }
-  }
-
-  // 2. Try fetching JSON from local public directory (local dev / pre-build)
-  if (!profile) {
-    const publicPath = path.join(process.cwd(), 'public', 'shares', `${cleanId}.json`);
-    try {
-      const file = await fs.readFile(publicPath, 'utf8');
-      profile = JSON.parse(file);
-    } catch {
-      // ignore
-    }
-  }
-
-  // 3. Try fetching JSON from os tmpdir (Vercel serverless /tmp fallback)
-  if (!profile) {
-    const tmpPath = path.join(os.tmpdir(), 'shares', `${cleanId}.json`);
-    try {
-      const file = await fs.readFile(tmpPath, 'utf8');
-      profile = JSON.parse(file);
-    } catch {
-      // ignore
-    }
-  }
+  const { profile } = await getSharedProfile(id);
 
   // If no profile found, render a fallback error card or generic card
   if (!profile) {
