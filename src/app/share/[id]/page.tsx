@@ -6,38 +6,20 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-function getBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'http://localhost:3000';
-}
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const baseUrl = getBaseUrl();
-  const imageUrl = `${baseUrl}/api/share-image/${id}`;
 
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Hacker House Goa 2026 — Builder Identity',
     description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
     openGraph: {
       title: 'Hacker House Goa 2026 — Builder Identity',
       description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
-      images: [
-        {
-          url: imageUrl,
-          width: 800,
-          height: 1000,
-          alt: 'Builder Identity Card',
-        },
-      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Hacker House Goa 2026 — Builder Identity',
       description: 'Meet a builder heading to Hacker House Goa 2026. #FrameInGoa',
-      images: [imageUrl],
     },
   };
 }
