@@ -13,7 +13,7 @@ import { CardPhoto } from './CardPhoto';
 const FILTER_MATRIX_GREEN = 'brightness(0) saturate(100%) invert(58%) sepia(97%) saturate(3681%) hue-rotate(85deg) brightness(108%) contrast(106%)';
 
 export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
-  ({ profile, sizeClass }, ref) => {
+  ({ profile, sizeClass, isSatori }, ref) => {
     const displayStack = profile.stack?.length > 0
       ? profile.stack
       : ['NEXT.JS', 'GEMINI API', 'SHOPIFY'];
@@ -23,15 +23,17 @@ export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
       <div
         ref={ref}
         className={`relative flex flex-col justify-between ${sizeClass} overflow-hidden font-mono bg-[#050A05] border border-[#00FF41]/20 p-4 sm:p-5 md:p-6`}
-        style={{ boxShadow: '0 0 60px rgba(0,255,65,0.08), 0 30px 80px rgba(0,0,0,0.9)' }}
+        style={{ boxShadow: isSatori ? undefined : '0 0 60px rgba(0,255,65,0.08), 0 30px 80px rgba(0,0,0,0.9)' }}
       >
         {/* ── CRT Scanline Overlay ── */}
-        <div
-          className="absolute inset-0 z-50 pointer-events-none mix-blend-overlay opacity-[0.07]"
-          style={{
-            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #00FF41 2px, #00FF41 3px)',
-          }}
-        />
+        {!isSatori && (
+          <div
+            className="absolute inset-0 z-50 pointer-events-none mix-blend-overlay opacity-[0.07]"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #00FF41 2px, #00FF41 3px)',
+            }}
+          />
+        )}
 
         {/* ── 1. Top bar (Logo + Status + Branding) ───────────────── */}
         <div className="relative flex justify-between items-center w-full pb-2 z-20 border-b border-[#00FF41]/15 shrink-0">
@@ -46,7 +48,7 @@ export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <HHLogo filter={FILTER_MATRIX_GREEN} />
+            <HHLogo filter={FILTER_MATRIX_GREEN} isSatori={isSatori} />
             <span className="text-[#00FF41] text-[9px] font-bold opacity-70">&gt;_</span>
           </div>
         </div>
@@ -109,7 +111,7 @@ export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             </span>
             <div
               className="w-full border border-[#00FF41]/40 bg-[#00FF41]/8 px-2.5 py-1.5 flex items-center mb-2"
-              style={{ boxShadow: '0 0 10px rgba(0,255,65,0.1) inset' }}
+              style={{ boxShadow: isSatori ? undefined : '0 0 10px rgba(0,255,65,0.1) inset' }}
             >
               <span
                 className="font-mono text-sm md:text-base text-[#00FF41] uppercase tracking-widest font-bold"

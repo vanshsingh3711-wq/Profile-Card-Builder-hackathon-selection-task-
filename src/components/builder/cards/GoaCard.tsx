@@ -7,11 +7,11 @@
 
 import React from 'react';
 import { BadgeCheck, Zap, Sparkles } from 'lucide-react';
-import { FILTER_YELLOW, FILTER_WHITE, HHLogo, CardInnerProps, generateBuilderId } from './card-shared';
+import { FILTER_YELLOW, FILTER_WHITE, HHLogo, CardInnerProps, generateBuilderId, baseUrl } from './card-shared';
 import { CardPhoto } from './CardPhoto';
 
 export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
-  ({ profile, sizeClass }, ref) => {
+  ({ profile, sizeClass, isSatori }, ref) => {
     const displayStack =
       profile.stack?.length > 0 ? profile.stack : ['NEXT.JS', 'TYPESCRIPT', 'PYTHON'];
     const builderId = generateBuilderId(profile.name);
@@ -20,20 +20,22 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
       <div
         ref={ref}
         className={`relative flex flex-col justify-between ${sizeClass} overflow-hidden font-mono bg-[#060B08] p-4 sm:p-5 md:p-6`}
-        style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.8)' }}
+        style={{ boxShadow: isSatori ? undefined : '0 30px 80px rgba(0,0,0,0.8)' }}
       >
         {/* Ambient background glow */}
-        <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full pointer-events-none opacity-40 blur-2xl"
-          style={{ background: 'radial-gradient(circle, rgba(255,20,147,0.3) 0%, rgba(255,225,77,0.15) 50%, transparent 70%)' }}
-        />
+        {!isSatori && (
+          <div
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full pointer-events-none opacity-40 blur-2xl"
+            style={{ background: 'radial-gradient(circle, rgba(255,20,147,0.3) 0%, rgba(255,225,77,0.15) 50%, transparent 70%)' }}
+          />
+        )}
 
         {/* ── 1. Header (Logo + Studio Branding) ────────────────── */}
         <div className="relative flex justify-between items-start w-full z-20 shrink-0">
-          <HHLogo filter={FILTER_YELLOW} />
+          <HHLogo filter={FILTER_YELLOW} isSatori={isSatori} />
           <div className="flex flex-col items-end gap-0.5">
             <img
-              src="/branding/2-47.svg"
+              src={`${baseUrl}/branding/2-47.svg`}
               alt="2:47 PM STUDIO"
               className="w-8 md:w-9 opacity-40"
               style={{ filter: FILTER_WHITE }}
@@ -57,7 +59,7 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
           {/* Accent gradient line */}
           <div
             className="w-10 h-[2px]"
-            style={{ background: 'linear-gradient(to right, #FFE14D, #FF1493)' }}
+            style={{ background: isSatori ? '#FFE14D' : 'linear-gradient(to right, #FFE14D, #FF1493)' }}
           />
 
           {/* Role */}
@@ -73,7 +75,7 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             >
               {profile.name || 'YOUR NAME'}
             </h2>
-            <BadgeCheck className="w-4 h-4 md:w-5 md:h-5 text-hh-yellow fill-hh-yellow/20 flex-shrink-0" />
+            {!isSatori && <BadgeCheck className="w-4 h-4 md:w-5 md:h-5 text-hh-yellow fill-hh-yellow/20 flex-shrink-0" />}
           </div>
 
           {/* Stack pills */}
@@ -98,7 +100,7 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
                 ✦ Builder Title ✦
               </span>
               <div className="flex items-center gap-1">
-                <Zap className="w-3 h-3 text-hh-yellow fill-hh-yellow flex-shrink-0" />
+                {!isSatori && <Zap className="w-3 h-3 text-hh-yellow fill-hh-yellow flex-shrink-0" />}
                 <span
                   className="font-bodoni text-base sm:text-lg md:text-xl text-hh-pink uppercase tracking-wide leading-tight"
                   style={{ textShadow: '0 0 12px rgba(255,20,147,0.55)' }}
@@ -110,7 +112,7 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
 
             <div className="flex flex-col items-end gap-0.5 shrink-0">
               <div className="flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5 text-hh-pink" />
+                {!isSatori && <Sparkles className="w-2.5 h-2.5 text-hh-pink" />}
                 <span className="font-mono text-[7.5px] md:text-[8px] font-bold text-hh-yellow uppercase tracking-widest">
                   GOA, INDIA
                 </span>

@@ -7,11 +7,11 @@
 
 import React from 'react';
 import { PenTool } from 'lucide-react';
-import { FILTER_GREEN, HHLogo, CardInnerProps, generateBuilderId } from './card-shared';
+import { FILTER_GREEN, HHLogo, CardInnerProps, generateBuilderId, baseUrl } from './card-shared';
 import { CardPhoto } from './CardPhoto';
 
 export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
-  ({ profile, sizeClass }, ref) => {
+  ({ profile, sizeClass, isSatori }, ref) => {
     const displayStack =
       profile.stack?.length > 0 ? profile.stack : ['NEXT.JS', 'TYPESCRIPT', 'PYTHON'];
     const builderId = generateBuilderId(profile.name);
@@ -20,7 +20,7 @@ export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
       <div
         ref={ref}
         className={`relative flex flex-col justify-between ${sizeClass} overflow-hidden font-mono bg-[#FFFBEA] p-4 sm:p-5 md:p-6`}
-        style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
+        style={{ boxShadow: isSatori ? undefined : '0 20px 60px rgba(0,0,0,0.22)' }}
       >
         {/* ── Inner decorative border ─────────────────────────────── */}
         <div className="absolute inset-2.5 border border-[#0A4226]/15 pointer-events-none z-30" />
@@ -29,7 +29,7 @@ export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
         <div className="relative flex justify-between items-start w-full z-20 shrink-0">
           <div className="flex flex-col gap-0.5">
             <img
-              src="/branding/2-47.svg"
+              src={`${baseUrl}/branding/2-47.svg`}
               alt="2:47 PM STUDIO"
               className="w-8 md:w-9"
               style={{ filter: FILTER_GREEN }}
@@ -41,7 +41,7 @@ export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
               BUILDER ID // {builderId}
             </span>
           </div>
-          <HHLogo filter={FILTER_GREEN} />
+          <HHLogo filter={FILTER_GREEN} isSatori={isSatori} />
         </div>
 
         {/* ── 2. Circular Photo Section ────────────────────────────── */}
@@ -50,7 +50,7 @@ export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             <CardPhoto photo={profile.photo} variant="editorial" />
             {/* PenTool badge */}
             <div className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 bg-hh-pink rounded-full flex items-center justify-center text-white z-30 shadow-md">
-              <PenTool className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              {!isSatori && <PenTool className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             </div>
           </div>
         </div>

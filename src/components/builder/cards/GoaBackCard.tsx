@@ -3,8 +3,8 @@ import { BuilderProfile } from '@/types/builder';
 import QRCode from 'react-qr-code';
 import { HHLogo, FILTER_YELLOW, generateBuilderId } from './card-shared';
 
-export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile }>(
-  ({ profile }, ref) => {
+export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile; isSatori?: boolean }>(
+  ({ profile, isSatori }, ref) => {
     const sizeClass = 'w-full h-full';
     const builderId = generateBuilderId(profile.name);
 
@@ -19,15 +19,17 @@ export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderPr
       <div
         ref={ref}
         className={`relative flex flex-col justify-between ${sizeClass} overflow-hidden font-mono bg-[#060B08] p-4 sm:p-5 md:p-6`}
-        style={{ boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}
+        style={{ boxShadow: isSatori ? undefined : 'inset 0 0 40px rgba(0,0,0,0.8)' }}
       >
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full pointer-events-none opacity-30 blur-2xl"
-          style={{ background: 'radial-gradient(circle, rgba(255,20,147,0.3) 0%, rgba(255,225,77,0.15) 50%, transparent 70%)' }}
-        />
+        {!isSatori && (
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full pointer-events-none opacity-30 blur-2xl"
+            style={{ background: 'radial-gradient(circle, rgba(255,20,147,0.3) 0%, rgba(255,225,77,0.15) 50%, transparent 70%)' }}
+          />
+        )}
 
         <div className="relative z-20 flex justify-between items-start w-full border-b border-white/10 pb-3 shrink-0">
-          <HHLogo filter={FILTER_YELLOW} />
+          <HHLogo filter={FILTER_YELLOW} isSatori={isSatori} />
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-white/40 text-[6.5px] md:text-[7px] font-bold tracking-[0.2em] uppercase">
               HACKER HOUSE GOA 2026
@@ -41,15 +43,19 @@ export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderPr
         <div className="relative z-20 flex flex-col items-center justify-center my-auto w-full gap-4">
           <div className="bg-white p-2.5 shadow-[0_0_20px_rgba(255,20,147,0.3)]">
             {qrUrl ? (
-              <QRCode
-                value={qrUrl}
-                size={140}
-                level="M"
-                bgColor="#FFFFFF"
-                fgColor="#060B08"
-              />
+              isSatori ? (
+                <div className="w-[140px] h-[140px] bg-black" style={{ display: 'flex' }} />
+              ) : (
+                <QRCode
+                  value={qrUrl}
+                  size={140}
+                  level="M"
+                  bgColor="#FFFFFF"
+                  fgColor="#060B08"
+                />
+              )
             ) : (
-              <div className="w-[140px] h-[140px] bg-gray-200" />
+              <div className="w-[140px] h-[140px] bg-gray-200" style={{ display: 'flex' }} />
             )}
           </div>
           <span className="font-mono text-[7px] md:text-[8px] text-hh-yellow uppercase tracking-widest bg-black/40 px-3 py-1 border border-hh-yellow/20">
@@ -58,7 +64,7 @@ export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderPr
         </div>
 
         <div className="relative z-20 flex flex-col gap-2 shrink-0">
-          <div className="w-10 h-[2px]" style={{ background: 'linear-gradient(to right, #FFE14D, #FF1493)' }} />
+          <div className="w-10 h-[2px]" style={{ background: isSatori ? '#FFE14D' : 'linear-gradient(to right, #FFE14D, #FF1493)' }} />
           
           <div className="flex justify-between items-end">
             <div className="flex flex-col gap-0.5">

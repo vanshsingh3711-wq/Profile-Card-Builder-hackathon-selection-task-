@@ -22,12 +22,13 @@ import { TerminalCard } from './cards/TerminalCard';
 interface BuilderCardProps {
   profile: BuilderProfile;
   style?: CardStyle;
+  isSatori?: boolean;
 }
 
 export const BuilderCard = React.forwardRef<
   HTMLDivElement,
   BuilderCardProps
->(({ profile, style = 'goa' }, ref) => {
+>(({ profile, style = 'goa', isSatori }, ref) => {
   /*
    * The preview is responsive.
    *
@@ -42,6 +43,7 @@ export const BuilderCard = React.forwardRef<
         ref={ref}
         profile={profile}
         sizeClass={sizeClass}
+        isSatori={isSatori}
       />
     );
   }
@@ -52,6 +54,7 @@ export const BuilderCard = React.forwardRef<
         ref={ref}
         profile={profile}
         sizeClass={sizeClass}
+        isSatori={isSatori}
       />
     );
   }
@@ -61,6 +64,7 @@ export const BuilderCard = React.forwardRef<
       ref={ref}
       profile={profile}
       sizeClass={sizeClass}
+      isSatori={isSatori}
     />
   );
 });
