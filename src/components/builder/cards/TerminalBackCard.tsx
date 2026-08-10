@@ -15,7 +15,8 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
       : process.env.NEXT_PUBLIC_SITE_URL || 'https://profile-card-builder-hackathon-selection-task-j16qlg94p.vercel.app';
     
     const safeName = profile.name?.trim().replace(/\s+/g, '-').toLowerCase() || 'builder';
-    const qrUrl = `${baseUrl}/share/${safeName}`;
+    const qrIdentifier = profile.shareId || safeName;
+    const qrUrl = `${baseUrl}/share/${qrIdentifier}`;
 
     return (
       <div
