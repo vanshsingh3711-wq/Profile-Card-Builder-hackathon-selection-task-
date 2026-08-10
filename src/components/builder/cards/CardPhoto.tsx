@@ -25,7 +25,7 @@ export const CardPhoto: React.FC<CardPhotoProps> = ({
             <img
               src={photo}
               alt="Builder"
-              className="w-full h-full object-cover"
+              className="w-full h-full"
               style={{ filter: 'grayscale(100%) contrast(1.1) brightness(0.92)' }}
             />
           ) : (
@@ -51,7 +51,7 @@ export const CardPhoto: React.FC<CardPhotoProps> = ({
               <img
                 src={photo}
                 alt="Builder"
-                className="w-full h-full object-cover"
+                className="w-full h-full"
                 style={{
                   filter: 'grayscale(100%) contrast(1.4) brightness(0.7) sepia(1) hue-rotate(70deg) saturate(4)',
                 }}
@@ -84,7 +84,7 @@ export const CardPhoto: React.FC<CardPhotoProps> = ({
             <img
               src={photo}
               alt="Builder"
-              className="w-full h-full object-cover"
+              className="w-full h-full"
               style={{ filter: 'brightness(0.95) saturate(1.15) contrast(1.05)' }}
             />
           ) : (

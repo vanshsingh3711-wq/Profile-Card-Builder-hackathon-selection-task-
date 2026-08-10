@@ -1,33 +1,75 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
 import { BuilderAssistant } from './builder-assistant';
 import { StackEditor } from '@/components/ui/StackEditor';
-import { BuilderProfile } from '@/types/builder';
+import { BuilderProfile, BuilderIdentityDraft, BuilderChatDraft } from '@/types/builder';
+import { generateBuilderTitle } from '@/app/actions';
 
 interface Props {
+  profile: BuilderProfile;
+  identityDraft: BuilderIdentityDraft;
+  chatDraft: BuilderChatDraft;
+  onIdentityDraftChange: (updates: Partial<BuilderIdentityDraft>) => void;
+  onChatDraftChange: (updates: Partial<BuilderChatDraft>) => void;
   onProfileGenerated: (p: Partial<BuilderProfile>) => void;
   onBack: () => void;
 }
 
-export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) => {
-  const [showManual, setShowManual] = useState(false);
-  const [manual, setManual] = useState({ name: '', role: '', builderTitle: '' });
-  const [stackInput, setStackInput] = useState('');
-  const [stack, setStack] = useState<string[]>([]);
+export const IdentityScreen: React.FC<Props> = ({ 
+  profile, 
+  identityDraft, 
+  chatDraft, 
+  onIdentityDraftChange, 
+  onChatDraftChange, 
+  onProfileGenerated, 
+  onBack 
+}) => {
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
 
-  const addStack = () => {
-    const tag = stackInput.trim().toUpperCase();
+  const { showManual, manual, stackInput, stack } = identityDraft;
+
+  const setShowManual = (val: boolean) => onIdentityDraftChange({ showManual: val });
+  const setManual = (val: typeof manual) => onIdentityDraftChange({ manual: val });
+  const setStackInput = (val: string) => onIdentityDraftChange({ stackInput: val });
+  const setStack = (val: string[]) => onIdentityDraftChange({ stack: val });
+
+  const handleGenerateTitle = async () => {
+    const trimmedRole = manual.role.trim();
+    if (!trimmedRole || stack.length === 0) {
+      setError("Please fill in your Role and Stack first to generate a title.");
+      return;
+    }
+    
+    setError(null);
+    setIsGeneratingTitle(true);
+    
+    try {
+      const res = await generateBuilderTitle(manual.name.trim(), trimmedRole, stack);
+      if (res.success && res.title) {
+        setManual({ ...manual, builderTitle: res.title });
+      } else {
+        setError("Failed to generate title. Try typing one manually!");
+      }
+    } catch (err) {
+      setError("Something went wrong generating the title.");
+    } finally {
+      setIsGeneratingTitle(false);
+    }
+  };
+
+  const addStack = (forcedTag?: string) => {
+    const tag = (forcedTag ?? stackInput).trim().toUpperCase();
     if (tag && !stack.includes(tag) && stack.length < 5) {
-      setStack((prev) => [...prev, tag]);
+      setStack([...stack, tag]);
       setStackInput('');
       setError(null);
     }
   };
 
-  const removeStack = (tag: string) => setStack((prev) => prev.filter((t) => t !== tag));
+  const removeStack = (tag: string) => setStack(stack.filter((t) => t !== tag));
 
   const submitManual = () => {
     const trimmedName = manual.name.trim();
@@ -78,7 +120,11 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
             <div className="w-2.5 h-2.5 rounded-full bg-hh-pink animate-pulse shadow-[0_0_8px_rgba(255,20,147,0.8)]" />
             <span className="font-mono text-sm font-bold uppercase tracking-widest text-hh-pink">Studio AI · Active</span>
           </div>
-          <BuilderAssistant onProfileGenerated={onProfileGenerated} />
+          <BuilderAssistant 
+            chatDraft={chatDraft}
+            onChatDraftChange={onChatDraftChange}
+            onProfileGenerated={onProfileGenerated} 
+          />
           <div className="flex items-center gap-4 mt-2">
             <div className="h-px flex-1 bg-hh-yellow/10" />
             <button
@@ -112,7 +158,7 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
               type="text"
               placeholder="YOUR NAME"
               value={manual.name}
-              onChange={(e) => setManual((p) => ({ ...p, name: e.target.value }))}
+              onChange={(e) => setManual({ ...manual, name: e.target.value })}
               className="w-full bg-transparent border-b-2 border-hh-yellow/30 focus:border-hh-pink outline-none text-white font-bodoni text-3xl py-2 uppercase placeholder:text-white/10 transition-colors"
             />
           </div>
@@ -124,7 +170,7 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
               type="text"
               placeholder="AI DEVELOPER"
               value={manual.role}
-              onChange={(e) => setManual((p) => ({ ...p, role: e.target.value }))}
+              onChange={(e) => setManual({ ...manual, role: e.target.value })}
               className="w-full bg-transparent border-b-2 border-hh-yellow/30 focus:border-hh-pink outline-none text-white font-mono text-lg py-2 uppercase placeholder:text-white/10 transition-colors"
             />
           </div>
@@ -141,12 +187,22 @@ export const IdentityScreen: React.FC<Props> = ({ onProfileGenerated, onBack }) 
 
           {/* BUILDER TITLE */}
           <div className="flex flex-col gap-2">
-            <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">Builder Title</label>
+            <div className="flex justify-between items-end">
+              <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">Builder Title</label>
+              <button 
+                onClick={handleGenerateTitle}
+                disabled={isGeneratingTitle}
+                className="text-[10px] font-mono text-hh-pink hover:text-white uppercase tracking-widest flex items-center gap-1 disabled:opacity-50 transition-colors"
+              >
+                {isGeneratingTitle ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {isGeneratingTitle ? 'Generating...' : 'Generate Title'}
+              </button>
+            </div>
             <input
               type="text"
               placeholder="AGENT ARCHITECT"
               value={manual.builderTitle}
-              onChange={(e) => setManual((p) => ({ ...p, builderTitle: e.target.value }))}
+              onChange={(e) => setManual({ ...manual, builderTitle: e.target.value })}
               className="w-full bg-transparent border-b-2 border-hh-yellow/30 focus:border-hh-pink outline-none text-hh-pink font-bodoni text-3xl py-2 uppercase placeholder:text-white/10 transition-colors"
             />
           </div>

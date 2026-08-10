@@ -10,12 +10,16 @@ interface PhotoCropEditorProps {
   imageSrc: string;
   subjectBox: SubjectBox | null;
   onConfirm: (processedImage: string) => void;
+  onTriggerUpload?: () => void;
+  onTriggerCamera?: () => void;
 }
 
 export const PhotoCropEditor: React.FC<PhotoCropEditorProps> = ({
   imageSrc,
   subjectBox,
   onConfirm,
+  onTriggerUpload,
+  onTriggerCamera,
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -126,7 +130,7 @@ export const PhotoCropEditor: React.FC<PhotoCropEditorProps> = ({
       </div>
 
       {/* ACTIONS */}
-      <div className="w-full max-w-[420px] mx-auto mt-2">
+      <div className="w-full max-w-[420px] mx-auto mt-2 flex flex-col gap-3">
         <button
           onClick={handleConfirm}
           disabled={isProcessing || !croppedAreaPixels}
@@ -147,6 +151,29 @@ export const PhotoCropEditor: React.FC<PhotoCropEditorProps> = ({
             <span>Use This Photo &rarr;</span>
           )}
         </button>
+
+        {(onTriggerUpload || onTriggerCamera) && (
+          <div className="flex items-center gap-3 w-full">
+            {onTriggerUpload && (
+              <button
+                onClick={onTriggerUpload}
+                disabled={isProcessing}
+                className="flex-1 py-3 bg-[#060B08] border border-white/20 text-white font-mono text-[10px] sm:text-xs uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                Upload New
+              </button>
+            )}
+            {onTriggerCamera && (
+              <button
+                onClick={onTriggerCamera}
+                disabled={isProcessing}
+                className="flex-1 py-3 bg-[#060B08] border border-white/20 text-white font-mono text-[10px] sm:text-xs uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                Take New
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

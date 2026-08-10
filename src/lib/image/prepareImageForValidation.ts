@@ -7,7 +7,7 @@
  */
 export async function prepareImageForValidation(
   file: File
-): Promise<string> {
+): Promise<{ dataUrl: string; scaleFactor: number }> {
   // If it's HEIC, we might need a special library or just fail gracefully 
   // since most browsers don't support native HEIC decoding on canvas.
   if (
@@ -23,6 +23,7 @@ export async function prepareImageForValidation(
   const MAX_SIZE = 1200;
 
   let { width, height } = image;
+  const originalWidth = width;
 
   if (width > MAX_SIZE || height > MAX_SIZE) {
     if (width > height) {
@@ -49,14 +50,16 @@ export async function prepareImageForValidation(
 
   ctx.drawImage(image, 0, 0, width, height);
 
+  const scaleFactor = originalWidth / width;
+
   // Use WebP if possible, fallback to JPEG
   const dataUrl = canvas.toDataURL("image/webp", 0.85);
   
   if (dataUrl.startsWith("data:image/webp")) {
-    return dataUrl;
+    return { dataUrl, scaleFactor };
   }
   
-  return canvas.toDataURL("image/jpeg", 0.85);
+  return { dataUrl: canvas.toDataURL("image/jpeg", 0.85), scaleFactor };
 }
 
 export function loadImage(file: File): Promise<HTMLImageElement> {

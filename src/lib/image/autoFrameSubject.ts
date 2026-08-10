@@ -23,24 +23,32 @@ export function autoFrameSubject(
   containerWidth: number = 800,
   containerHeight: number = 800
 ): CropState {
-  // If no subject, just use default center fit (zoom = 1, x=0, y=0)
-  // Well, react-easy-crop's default zoom = 1 means it fits or covers depending on mode.
-  // Assuming objectFit="cover" and we want default crop.
-  if (!subjectBox) {
-    return { x: 0, y: 0, zoom: 1 };
-  }
-
   const TARGET_RATIO = containerWidth / containerHeight;
   const imageRatio = imageWidth / imageHeight;
 
-  // react-easy-crop's base zoom (zoom=1) sizes the image to cover the container.
+  // react-easy-crop defaults to objectFit="contain", meaning it fits the image 
+  // entirely inside the container. The base scale (zoom=1) is determined by the 
+  // dimension that restricts the size first.
   let baseScale: number;
   if (imageRatio > TARGET_RATIO) {
-    // Image is wider than container, height determines base scale
-    baseScale = containerHeight / imageHeight;
-  } else {
-    // Image is taller than container, width determines base scale
+    // Image is wider than container, width determines base scale
     baseScale = containerWidth / imageWidth;
+  } else {
+    // Image is taller than container, height determines base scale
+    baseScale = containerHeight / imageHeight;
+  }
+
+  // To prevent black bars, the final scale (baseScale * zoom) must be large enough
+  // so that both width and height cover the container dimensions.
+  const minScaleX = containerWidth / imageWidth;
+  const minScaleY = containerHeight / imageHeight;
+  const minRequiredScale = Math.max(minScaleX, minScaleY);
+  
+  // The minimum zoom required to cover the container completely
+  const minZoomToCover = minRequiredScale / baseScale;
+
+  if (!subjectBox) {
+    return { x: 0, y: 0, zoom: minZoomToCover };
   }
 
   // Desired height of the subject in the final crop: ~70% of the container height
@@ -49,11 +57,11 @@ export function autoFrameSubject(
 
   let zoom = desiredSubjectHeightInContainer / currentSubjectHeightInContainer;
   
-  // Don't zoom out past the base cover (zoom < 1)
-  zoom = Math.max(1, zoom);
+  // Enforce minimum zoom so we don't have black bars (must cover the frame)
+  zoom = Math.max(minZoomToCover, zoom);
   
-  // Don't zoom in too much either, say max 3x
-  zoom = Math.min(3, zoom);
+  // Don't zoom in too much either, say max 3x of the minZoomToCover
+  zoom = Math.min(minZoomToCover * 3, zoom);
 
   // Now calculate the required translation (x, y).
   // The center of the image in pixel space:

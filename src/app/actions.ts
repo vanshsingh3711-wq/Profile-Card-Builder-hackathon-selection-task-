@@ -14,13 +14,13 @@ const openai = createOpenAI({
  */
 const chatResponseSchema = z.object({
   chatResponse: z.string().describe("Your warm, human, conversational reply. If presenting titles, say something like 'Here are 3 title options for you:'"),
-  readyForTitles: z.boolean().describe("True when you have gathered enough info about the user (name, role, stack) to suggest builder titles. False if still gathering info."),
+  readyForTitles: z.boolean().describe("True ONLY when you have gathered ALL 3 required fields (name, role, stack). False if any are missing."),
   profile: z.object({
     name: z.string().nullable().describe("The builder's name, or null if not known yet."),
     role: z.string().nullable().describe("The builder's professional role (e.g. 'AI Developer'), or null if not known."),
-    stack: z.array(z.string()).describe("Up to 4 tech stack items. Empty array if not known yet."),
-  }).describe("Always include this. Use null/empty for unknown fields."),
-  suggestedTitles: z.array(z.string()).describe("Exactly 3 bold, badass 1-3 word builder titles (ALL CAPS) if readyForTitles is true. Empty array otherwise. Examples: AGENT ARCHITECT, SYSTEMS BUILDER, VIBE CODER, NEURAL FORGER.")
+    stack: z.array(z.string()).describe("List of technologies. Empty array if not known yet."),
+  }).describe("Always include this. Use null/empty for unknown fields. Extract from natural language."),
+  suggestedTitles: z.array(z.string()).describe("Exactly 3 bold, badass 1-3 word builder titles (ALL CAPS) if readyForTitles is true. Empty array otherwise.")
 });
 
 export async function chatWithBuilder(messages: { role: 'user' | 'assistant'; content: string }[]) {
@@ -32,15 +32,16 @@ export async function chatWithBuilder(messages: { role: 'user' | 'assistant'; co
     const result = await generateObject({
       model: openai('gpt-4o-mini'),
       schema: chatResponseSchema,
-      system: `You are the Studio AI for Hacker House Goa 2026 — a legendary builder retreat.
-Your job: have a short, energetic conversation to learn who the user is, what they build, and their tech stack. Then suggest 3 badass builder titles.
+      system: `You are the Studio AI for Hacker House Goa 2026.
+Your job: learn who the user is, their role, and their tech stack. Then suggest 3 badass builder titles.
 
 Rules:
-- Be warm, human, and fast. Max 1-2 sentences per reply.
-- Ask for their name first if they haven't given it. Then ask what they build.
-- Once you know their name AND what they build, set readyForTitles=true and provide exactly 3 title suggestions in suggestedTitles (ALL CAPS, 1-3 words each).
-- If the user says "more", "different", "suggest more", or similar — generate 3 NEW titles (different from before).
-- Do NOT finalize the card. Wait for the user to select a title.`,
+1. You MUST gather exactly these 3 fields: Name, Role, and Tech Stack.
+2. If ALL three fields are available: set readyForTitles=true and provide exactly 3 title suggestions (ALL CAPS, 1-3 words) in suggestedTitles. Do NOT ask another question.
+3. If one or more fields are missing: set readyForTitles=false and ask ONLY for the missing information in chatResponse. Do not show warnings or tell the user to "tell Studio AI" anything.
+4. Extract information if the user provides it naturally in a sentence.
+5. Do not ask for builderTitle or personality.
+6. If the user asks for more/different titles, generate 3 NEW titles.`,
       messages,
     });
 
@@ -56,5 +57,30 @@ Rules:
         suggestedTitles: []
       }
     };
+  }
+}
+
+const generateTitleSchema = z.object({
+  title: z.string().describe("Exactly 1 bold, badass 1-3 word builder title (ALL CAPS). Example: AGENT ARCHITECT")
+});
+
+export async function generateBuilderTitle(name: string, role: string, stack: string[]) {
+  try {
+    if (!process.env.OPENAI_API_KEY) throw new Error("No API key");
+
+    const result = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: generateTitleSchema,
+      prompt: `Generate exactly one badass 1-3 word builder title for this user.
+Name: ${name}
+Role: ${role}
+Tech Stack: ${stack.join(', ')}
+Requirements: MUST be ALL CAPS. Keep it concise (1-3 words). Focus on their role and tech stack.`,
+    });
+
+    return { success: true, title: result.object.title };
+  } catch (error) {
+    console.error("AI title generation failed:", error);
+    return { success: false, error: "Failed to generate title" };
   }
 }

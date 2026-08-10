@@ -3,31 +3,29 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, RefreshCw, Check } from 'lucide-react';
 import { chatWithBuilder } from '@/app/actions';
-import { BuilderProfile } from '@/types/builder';
+import { BuilderProfile, BuilderChatDraft, Message } from '@/types/builder';
 
 interface BuilderAssistantProps {
+  chatDraft: BuilderChatDraft;
+  onChatDraftChange: (updates: Partial<BuilderChatDraft>) => void;
   onProfileGenerated: (profile: Partial<BuilderProfile>) => void;
 }
 
-type Message = { role: 'assistant' | 'user'; content: string };
-
-interface AIState {
-  profile: { name: string | null; role: string | null; stack: string[] };
-  pendingTitles: string[] | null; // titles waiting for user to pick
-}
-
-export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGenerated }) => {
+export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ 
+  chatDraft,
+  onChatDraftChange,
+  onProfileGenerated 
+}) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hey! 👋 I'm your Studio AI. What's your name and what do you build?" }
-  ]);
-  const [aiState, setAiState] = useState<AIState>({
-    profile: { name: null, role: null, stack: [] },
-    pendingTitles: null,
-  });
-  const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const { messages, aiState, selectedTitle } = chatDraft;
+
+  const setMessages = (val: typeof messages) => onChatDraftChange({ messages: val });
+  const setAiState = (val: typeof aiState) => onChatDraftChange({ aiState: val });
+
+  const setSelectedTitle = (val: typeof selectedTitle) => onChatDraftChange({ selectedTitle: val });
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -42,14 +40,14 @@ export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGen
     setInput('');
     setIsLoading(true);
     // Clear pending titles while we wait for new response
-    setAiState(prev => ({ ...prev, pendingTitles: null }));
+    setAiState({ ...aiState, pendingTitles: null });
     setSelectedTitle(null);
 
     try {
       const res = await chatWithBuilder(newMessages);
       const { chatResponse, readyForTitles, profile, suggestedTitles } = res.data;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: chatResponse }]);
+      setMessages([...newMessages, { role: 'assistant', content: chatResponse }]);
       setAiState({
         profile: {
           name: profile.name,
@@ -60,7 +58,7 @@ export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGen
       });
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Something went wrong. Let's try again!" }]);
+      setMessages([...newMessages, { role: 'assistant', content: "Something went wrong. Let's try again!" }]);
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +80,7 @@ export const BuilderAssistant: React.FC<BuilderAssistantProps> = ({ onProfileGen
     const { profile } = aiState;
 
     if (!profile.name?.trim() || !profile.role?.trim() || !profile.stack || profile.stack.length === 0) {
-      setError("Please tell Studio AI your Name, Role, and Tech Stack in the chat before building your card!");
+      sendMessage("Build my card");
       return;
     }
 

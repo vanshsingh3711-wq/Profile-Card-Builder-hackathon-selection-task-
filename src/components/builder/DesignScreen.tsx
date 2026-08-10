@@ -7,13 +7,14 @@
  * The user selects one style and proceeds to the Result.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { BuilderCard } from './BuilderCard';
 import { BuilderProfile, CardStyle } from '@/types/builder';
 
 interface Props {
   profile: BuilderProfile;
+  selectedStyle: CardStyle;
   onStyleSelected: (style: CardStyle) => void;
   onBack: () => void;
 }
@@ -24,8 +25,7 @@ const STYLES: { id: CardStyle; label: string; subtitle: string }[] = [
   { id: 'goa',      label: 'Goa',      subtitle: 'The Resident' },
 ];
 
-export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack }) => {
-  const [selected, setSelected] = useState<CardStyle>('editorial');
+export const DesignScreen: React.FC<Props> = ({ profile, selectedStyle, onStyleSelected, onBack }) => {
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
@@ -55,20 +55,20 @@ export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack
         {STYLES.map(({ id, label, subtitle }) => (
           <button
             key={id}
-            onClick={() => setSelected(id)}
+            onClick={() => onStyleSelected(id)}
             className="flex flex-col gap-3 group text-left"
           >
             {/* Card thumbnail */}
             <div
               className={`relative overflow-hidden transition-all duration-300 w-full aspect-[4/5] rounded-sm
-                ${selected === id
+                ${selectedStyle === id
                   ? 'ring-4 ring-hh-yellow ring-offset-2 ring-offset-[#0A4226] scale-[1.02]'
                   : 'ring-1 ring-hh-cream/10 opacity-70 hover:opacity-100 hover:ring-hh-yellow/40'}`}
             >
               <BuilderCard profile={profile} style={id} />
               
               {/* Selection indicator */}
-              {selected === id && (
+              {selectedStyle === id && (
                 <div className="absolute top-3 right-3 z-30 w-6 h-6 bg-hh-yellow rounded-full shadow-md flex items-center justify-center">
                   <div className="w-2 h-2 bg-[#0A4226] rounded-full" />
                 </div>
@@ -76,7 +76,7 @@ export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack
             </div>
 
             {/* Label */}
-            <div className={`flex flex-col gap-0.5 transition-colors ${selected === id ? 'text-hh-yellow' : 'text-hh-cream/50 group-hover:text-hh-cream'}`}>
+            <div className={`flex flex-col gap-0.5 transition-colors ${selectedStyle === id ? 'text-hh-yellow' : 'text-hh-cream/50 group-hover:text-hh-cream'}`}>
               <span className="font-bodoni text-xl uppercase">{label}</span>
               <span className="font-mono text-[10px] uppercase tracking-widest">{subtitle}</span>
             </div>
@@ -87,10 +87,10 @@ export const DesignScreen: React.FC<Props> = ({ profile, onStyleSelected, onBack
       {/* CTA */}
       <div className="flex flex-col gap-3">
         <button
-          onClick={() => onStyleSelected(selected)}
+          onClick={() => onStyleSelected(selectedStyle)}
           className="w-full sm:w-auto sm:self-start px-12 py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-colors shadow-[4px_4px_0_0_rgba(255,20,147,0.8)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(255,20,147,0.8)] transition-all"
         >
-          Generate with {STYLES.find(s => s.id === selected)?.label} Style →
+          Generate with {STYLES.find(s => s.id === selectedStyle)?.label} Style →
         </button>
         <p className="font-mono text-[10px] text-hh-cream/30 uppercase tracking-widest">
           You can switch styles on the result screen too

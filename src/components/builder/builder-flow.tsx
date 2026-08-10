@@ -20,26 +20,51 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-import { BuilderProfile, CardStyle } from '@/types/builder';
+import { BuilderProfile, CardStyle, BuilderDraft, DEFAULT_DRAFT, Step } from '@/types/builder';
 import { PhotoScreen }    from '../upload/PhotoScreen';
 import { IdentityScreen } from './IdentityScreen';
 import { DesignScreen }   from './DesignScreen';
 import { ResultScreen }   from './ResultScreen';
 
-type Step = 'photo' | 'identity' | 'design' | 'result';
-
-const EMPTY_PROFILE: BuilderProfile = {
-  name:         '',
-  role:         '',
-  stack:        [],
-  builderTitle: '',
-  photo:        null,
-};
-
 export const BuilderFlow = () => {
-  const [step,      setStep]      = useState<Step>('photo');
-  const [profile,   setProfile]   = useState<BuilderProfile>(EMPTY_PROFILE);
-  const [cardStyle, setCardStyle] = useState<CardStyle>('editorial');
+  const [isRestored, setIsRestored] = useState(false);
+  const [draft, setDraft] = useState<BuilderDraft>(DEFAULT_DRAFT);
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('builder-draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.step && parsed.profile) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setDraft({
+            ...DEFAULT_DRAFT,
+            ...parsed,
+            identity: { ...DEFAULT_DRAFT.identity, ...(parsed.identity || {}) },
+            chat: { ...DEFAULT_DRAFT.chat, ...(parsed.chat || {}) },
+            result: { ...DEFAULT_DRAFT.result, ...(parsed.result || {}) },
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse builder draft', e);
+      localStorage.removeItem('builder-draft');
+    } finally {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsRestored(true);
+    }
+  }, []);
+
+  // Autosave draft when state changes
+  useEffect(() => {
+    if (!isRestored) return;
+    try {
+      localStorage.setItem('builder-draft', JSON.stringify(draft));
+    } catch (e) {
+      console.error('Failed to save builder draft', e);
+    }
+  }, [draft, isRestored]);
 
   // Reset scroll position to top when switching steps
   useEffect(() => {
@@ -48,7 +73,7 @@ export const BuilderFlow = () => {
       left: 0,
       behavior: 'instant',
     });
-  }, [step]);
+  }, [draft.step]);
 
   const isProfileComplete = (p: BuilderProfile): boolean => {
     return Boolean(
@@ -64,45 +89,56 @@ export const BuilderFlow = () => {
   // ── handlers ─────────────────────────────────────────────────────────────
 
   const handlePhotoSelected = (photoUrl: string) => {
-    setProfile(prev => ({ ...prev, photo: photoUrl }));
-    setStep('identity');
+    setDraft(prev => ({
+      ...prev,
+      profile: { ...prev.profile, photo: photoUrl },
+      step: 'identity'
+    }));
   };
 
-  // Called when AI (or manual form) produces a complete profile
-  // → go to design selection, not directly to result
   const handleProfileGenerated = (partial: Partial<BuilderProfile>) => {
-    const updated = { ...profile, ...partial };
-    setProfile(updated);
-    if (isProfileComplete(updated)) {
-      setStep('design');
-    }
+    setDraft(prev => {
+      const updatedProfile = { ...prev.profile, ...partial };
+      return {
+        ...prev,
+        profile: updatedProfile,
+        step: isProfileComplete(updatedProfile) ? 'design' : prev.step
+      };
+    });
   };
 
   const handleStyleSelected = (style: CardStyle) => {
-    if (!isProfileComplete(profile)) {
-      setStep(profile.photo ? 'identity' : 'photo');
+    if (!isProfileComplete(draft.profile)) {
+      setDraft(prev => ({
+        ...prev,
+        step: prev.profile.photo ? 'identity' : 'photo'
+      }));
       return;
     }
-    setCardStyle(style);
-    setStep('result');
+    setDraft(prev => ({
+      ...prev,
+      cardStyle: style,
+      step: 'result'
+    }));
   };
 
   const handleEditProfile = (updated: BuilderProfile) => {
     if (isProfileComplete(updated)) {
-      setProfile(updated);
+      setDraft(prev => ({ ...prev, profile: updated }));
     }
   };
 
   const handleRestart = () => {
-    setProfile(EMPTY_PROFILE);
-    setCardStyle('editorial');
-    setStep('photo');
+    setDraft(DEFAULT_DRAFT);
+    localStorage.removeItem('builder-draft');
   };
 
   // ── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full min-h-screen px-4 py-4 md:px-8 md:py-8 bg-[#0A4226]">
+    <div 
+      className={`w-full min-h-screen px-4 py-4 md:px-8 md:py-8 bg-[#0A4226] transition-opacity duration-300 ${isRestored ? 'opacity-100' : 'opacity-0'}`}
+    >
       {/* Top navigation */}
       <div className="flex items-center justify-between gap-4 mb-8 md:mb-12 max-w-6xl mx-auto w-full px-2">
         <Link
@@ -134,37 +170,49 @@ export const BuilderFlow = () => {
 
       {/* Step screens */}
       <div className="w-full">
-        {step === 'photo' && (
+        {draft.step === 'photo' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <PhotoScreen onPhotoSelected={handlePhotoSelected} />
+            <PhotoScreen 
+              existingPhoto={draft.profile.photo}
+              onPhotoSelected={handlePhotoSelected} 
+              onResetPhoto={() => setDraft(prev => ({ ...prev, profile: { ...prev.profile, photo: null } }))}
+            />
           </div>
         )}
 
-        {step === 'identity' && (
+        {draft.step === 'identity' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <IdentityScreen
+              profile={draft.profile}
+              identityDraft={draft.identity}
+              chatDraft={draft.chat}
+              onIdentityDraftChange={(updates) => setDraft(prev => ({ ...prev, identity: { ...prev.identity, ...updates } }))}
+              onChatDraftChange={(updates) => setDraft(prev => ({ ...prev, chat: { ...prev.chat, ...updates } }))}
               onProfileGenerated={handleProfileGenerated}
-              onBack={() => setStep('photo')}
+              onBack={() => setDraft(prev => ({ ...prev, step: 'photo' }))}
             />
           </div>
         )}
 
-        {step === 'design' && (
+        {draft.step === 'design' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <DesignScreen
-              profile={profile}
+              profile={draft.profile}
+              selectedStyle={draft.cardStyle}
               onStyleSelected={handleStyleSelected}
-              onBack={() => setStep('identity')}
+              onBack={() => setDraft(prev => ({ ...prev, step: 'identity' }))}
             />
           </div>
         )}
 
-        {step === 'result' && (
+        {draft.step === 'result' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <ResultScreen
-              profile={profile}
-              cardStyle={cardStyle}
-              onCardStyleChange={setCardStyle}
+              profile={draft.profile}
+              cardStyle={draft.cardStyle}
+              resultDraft={draft.result}
+              onResultDraftChange={(updates) => setDraft(prev => ({ ...prev, result: { ...prev.result, ...updates } }))}
+              onCardStyleChange={(style) => setDraft(prev => ({ ...prev, cardStyle: style }))}
               onEditProfile={handleEditProfile}
               onRestart={handleRestart}
             />

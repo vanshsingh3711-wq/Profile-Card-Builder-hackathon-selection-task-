@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toJpeg } from 'html-to-image';
+import { ManualPhotoCropper } from './ManualPhotoCropper';
 
 import {
   Download,
@@ -10,20 +11,26 @@ import {
   Pencil,
   X,
   Check,
+  Sparkles,
 } from 'lucide-react';
 
 import { BuilderCard } from './BuilderCard';
+import { BackCard } from './cards/BackCard';
 import { StackEditor } from '@/components/ui/StackEditor';
 import { Toast, ToastProps } from '@/components/ui/Toast';
+import { generateBuilderTitle } from '@/app/actions';
 
 import {
   BuilderProfile,
   CardStyle,
+  BuilderResultDraft,
 } from '@/types/builder';
 
 interface Props {
   profile: BuilderProfile;
   cardStyle: CardStyle;
+  resultDraft: BuilderResultDraft;
+  onResultDraftChange: (updates: Partial<BuilderResultDraft>) => void;
   onCardStyleChange: (s: CardStyle) => void;
   onEditProfile: (p: BuilderProfile) => void;
   onRestart: () => void;
@@ -50,6 +57,8 @@ const STYLE_LABELS: {
 export const ResultScreen: React.FC<Props> = ({
   profile,
   cardStyle,
+  resultDraft,
+  onResultDraftChange,
   onCardStyleChange,
   onEditProfile,
   onRestart,
@@ -71,12 +80,24 @@ export const ResultScreen: React.FC<Props> = ({
 
   const [toast, setToast] = useState<ToastProps | null>(null);
 
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [editProfile, setEditProfile] =
-    useState<BuilderProfile>(profile);
-
+  const [isFlipped, setIsFlipped] = useState(false);
   const [stackInput, setStackInput] = useState('');
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+  const [pendingPhotoEdit, setPendingPhotoEdit] = useState<string | null>(null);
+
+  const { isEditing, editProfile } = resultDraft;
+  
+  // Use profile if editProfile is null (when opening edit mode for the first time)
+  const currentEditProfile = editProfile || profile;
+
+  const setIsEditing = (val: boolean) => onResultDraftChange({ isEditing: val });
+  const setEditProfile = (val: typeof editProfile | ((prev: BuilderProfile) => BuilderProfile)) => {
+    if (typeof val === 'function') {
+      onResultDraftChange({ editProfile: val(currentEditProfile) });
+    } else {
+      onResultDraftChange({ editProfile: val });
+    }
+  };
 
   const showToast = (
     message: string,
@@ -337,16 +358,15 @@ export const ResultScreen: React.FC<Props> = ({
     }
   };
 
-  const addEditStack = () => {
-    const tag =
-      stackInput
+  const addEditStack = (forcedTag?: string) => {
+    const tag = (forcedTag ?? stackInput)
         .trim()
         .toUpperCase();
 
     if (
       tag &&
-      !editProfile.stack.includes(tag) &&
-      editProfile.stack.length < 5
+      !currentEditProfile.stack.includes(tag) &&
+      currentEditProfile.stack.length < 5
     ) {
       setEditProfile((p) => ({
         ...p,
@@ -357,6 +377,28 @@ export const ResultScreen: React.FC<Props> = ({
       }));
 
       setStackInput('');
+    }
+  };
+
+  const handleGenerateTitle = async () => {
+    const trimmedRole = currentEditProfile.role?.trim() || '';
+    if (!trimmedRole || !currentEditProfile.stack || currentEditProfile.stack.length === 0) {
+      showToast('Please fill in your Role and Stack first to generate a title.', 'error');
+      return;
+    }
+
+    setIsGeneratingTitle(true);
+    try {
+      const res = await generateBuilderTitle(currentEditProfile.name?.trim() || '', trimmedRole, currentEditProfile.stack);
+      if (res.success && res.title) {
+        setEditProfile(p => ({ ...p, builderTitle: res.title }));
+      } else {
+        showToast('Failed to generate title. Try typing one manually!', 'error');
+      }
+    } catch (err) {
+      showToast('Something went wrong generating the title.', 'error');
+    } finally {
+      setIsGeneratingTitle(false);
     }
   };
 
@@ -374,11 +416,11 @@ export const ResultScreen: React.FC<Props> = ({
 
   const saveEdit = () => {
     if (
-      !editProfile.name?.trim() ||
-      !editProfile.role?.trim() ||
-      !editProfile.builderTitle?.trim() ||
-      !editProfile.stack ||
-      editProfile.stack.length === 0
+      !currentEditProfile.name?.trim() ||
+      !currentEditProfile.role?.trim() ||
+      !currentEditProfile.builderTitle?.trim() ||
+      !currentEditProfile.stack ||
+      currentEditProfile.stack.length === 0
     ) {
       showToast(
         'All fields (Name, Role, Stack, Title) are required to save changes.',
@@ -388,17 +430,17 @@ export const ResultScreen: React.FC<Props> = ({
     }
 
     onEditProfile({
-      ...editProfile,
-      name: editProfile.name.trim(),
-      role: editProfile.role.trim(),
-      builderTitle: editProfile.builderTitle.trim(),
+      ...currentEditProfile,
+      name: currentEditProfile.name.trim(),
+      role: currentEditProfile.role.trim(),
+      builderTitle: currentEditProfile.builderTitle.trim(),
     });
     setIsEditing(false);
   };
 
   const displayProfile =
     isEditing
-      ? editProfile
+      ? currentEditProfile
       : profile;
 
   return (
@@ -467,20 +509,37 @@ export const ResultScreen: React.FC<Props> = ({
 
           <div className="w-full lg:w-auto lg:sticky lg:top-8 flex flex-col items-center gap-4 shrink-0">
 
-            <div className="relative w-full max-w-[420px] mx-auto transition-transform duration-500 hover:scale-[1.02]">
+            <div className="relative w-full max-w-[420px] mx-auto perspective-[1000px] transition-transform duration-500 hover:scale-[1.02]">
+              <div 
+                className="relative w-full transition-transform duration-700 [transform-style:preserve-3d]"
+                style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+              >
+                {/* Front Side */}
+                <div className="w-full [backface-visibility:hidden]">
+                  <BuilderCard
+                    ref={exportCardRef}
+                    profile={displayProfile}
+                    style={cardStyle}
+                  />
+                </div>
 
-              {/*
-               * THIS is the card that gets downloaded.
-               *
-               * There is no hidden duplicate anymore.
-               */}
-              <BuilderCard
-                ref={exportCardRef}
-                profile={displayProfile}
-                style={cardStyle}
-              />
-
+                {/* Back Side */}
+                <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  <BackCard
+                    profile={displayProfile}
+                    style={cardStyle}
+                  />
+                </div>
+              </div>
             </div>
+
+            <button
+              onClick={() => setIsFlipped(!isFlipped)}
+              className="mt-2 px-6 py-2 bg-black/40 border border-hh-yellow/50 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:bg-hh-yellow hover:text-[#0A4226] transition-colors"
+              aria-label={isFlipped ? "Flip card to front" : "Flip card to back"}
+            >
+              FLIP CARD
+            </button>
 
             {/* Style switcher */}
 
@@ -743,6 +802,35 @@ export const ResultScreen: React.FC<Props> = ({
 
                 </div>
 
+                {/* Photo */}
+                <div className="flex flex-col gap-3">
+                  <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                    Profile Photo
+                  </label>
+                  <div className="flex items-center gap-4">
+                    {currentEditProfile.photo && (
+                      <div className="w-14 h-14 shrink-0 rounded-full overflow-hidden border border-hh-yellow/50">
+                        <img src={currentEditProfile.photo} alt="Profile" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <label className="cursor-pointer px-4 py-3 bg-black/30 border-[2px] border-hh-yellow/30 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:border-hh-yellow hover:bg-hh-yellow/10 transition-colors flex items-center justify-center">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setPendingPhotoEdit(URL.createObjectURL(file));
+                          }
+                          e.target.value = '';
+                        }}
+                      />
+                      Change Photo
+                    </label>
+                  </div>
+                </div>
+
                 {/* Name */}
 
                 <div className="flex flex-col gap-3">
@@ -753,7 +841,7 @@ export const ResultScreen: React.FC<Props> = ({
 
                   <input
                     type="text"
-                    value={editProfile.name}
+                    value={currentEditProfile.name}
                     onChange={(e) =>
                       setEditProfile(
                         (p) => ({
@@ -777,7 +865,7 @@ export const ResultScreen: React.FC<Props> = ({
 
                   <input
                     type="text"
-                    value={editProfile.role}
+                    value={currentEditProfile.role}
                     onChange={(e) =>
                       setEditProfile(
                         (p) => ({
@@ -794,7 +882,7 @@ export const ResultScreen: React.FC<Props> = ({
                 {/* Stack */}
 
                 <StackEditor
-                  stack={editProfile.stack}
+                  stack={currentEditProfile.stack}
                   stackInput={stackInput}
                   onInputChange={
                     setStackInput
@@ -810,14 +898,25 @@ export const ResultScreen: React.FC<Props> = ({
 
                 <div className="flex flex-col gap-3">
 
-                  <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
-                    Builder Title
-                  </label>
+                  <div className="flex justify-between items-end">
+                    <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                      Builder Title
+                    </label>
+
+                    <button 
+                      onClick={handleGenerateTitle}
+                      disabled={isGeneratingTitle}
+                      className="text-[10px] font-mono text-hh-pink hover:text-white uppercase tracking-widest flex items-center gap-1 disabled:opacity-50 transition-colors"
+                    >
+                      {isGeneratingTitle ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      {isGeneratingTitle ? 'Generating...' : 'Generate Title'}
+                    </button>
+                  </div>
 
                   <input
                     type="text"
                     value={
-                      editProfile.builderTitle
+                      currentEditProfile.builderTitle
                     }
                     onChange={(e) =>
                       setEditProfile(
@@ -868,6 +967,21 @@ export const ResultScreen: React.FC<Props> = ({
         </div>
 
       </div>
+
+      {pendingPhotoEdit && (
+        <ManualPhotoCropper
+          imageSrc={pendingPhotoEdit}
+          onCancel={() => {
+            URL.revokeObjectURL(pendingPhotoEdit);
+            setPendingPhotoEdit(null);
+          }}
+          onSave={(url) => {
+            URL.revokeObjectURL(pendingPhotoEdit);
+            setEditProfile(p => ({ ...p, photo: url }));
+            setPendingPhotoEdit(null);
+          }}
+        />
+      )}
     </>
   );
 };
