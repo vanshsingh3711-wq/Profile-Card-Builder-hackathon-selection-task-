@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       quality: 0.85
     });
 
-    return new NextResponse(convertedBuffer, {
+    return new NextResponse(Buffer.from(convertedBuffer), {
       headers: {
         'Content-Type': 'image/jpeg',
       },
