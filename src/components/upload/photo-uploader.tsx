@@ -1,15 +1,29 @@
 import React, { useCallback } from 'react';
 import { UploadCloud } from 'lucide-react';
+import { convertHeicToJpeg } from "@/lib/image/convertHeic";
 
 interface PhotoUploaderProps {
   onPhotoSelected: (photoDataUrl: string) => void;
 }
 
 export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ onPhotoSelected }) => {
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let file = e.target.files?.[0];
     if (!file) return;
 
+    if (
+      file.name.toLowerCase().endsWith('.heic') || 
+      file.name.toLowerCase().endsWith('.heif') || 
+      file.type === 'image/heic' || 
+      file.type === 'image/heif'
+    ) {
+      try {
+        file = await convertHeicToJpeg(file);
+      } catch (convertError) {
+        console.error('HEIC conversion failed:', convertError);
+        return;
+      }
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -25,7 +39,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ onPhotoSelected })
     <div className="w-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-hh-yellow/50 bg-hh-yellow/5 hover:bg-hh-yellow/10 transition-colors rounded-xl cursor-pointer relative group">
       <input
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         onChange={handleFileChange}
       />

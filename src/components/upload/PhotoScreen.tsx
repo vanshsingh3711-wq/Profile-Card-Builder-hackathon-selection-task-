@@ -6,6 +6,7 @@ import { PhotoValidationResult, SubjectBox } from "@/types/builder";
 import { validateImageFile } from "@/lib/image/validateImageFile";
 import { prepareImageForValidation } from "@/lib/image/prepareImageForValidation";
 import { PhotoCropEditor } from './PhotoCropEditor';
+import { convertHeicToJpeg } from "@/lib/image/convertHeic";
 
 interface Props {
   existingPhoto?: string | null;
@@ -112,11 +113,29 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
     return () => clearInterval(interval);
   }, [processingState]);
 
-  const processFile = useCallback(async (file: File) => {
+  const processFile = useCallback(async (originalFile: File) => {
     setError(null);
     setStatusMessageIndex(0);
     
     try {
+      let file = originalFile;
+      
+      // Convert HEIC/HEIF to JPEG if necessary
+      if (
+        file.name.toLowerCase().endsWith('.heic') || 
+        file.name.toLowerCase().endsWith('.heif') || 
+        file.type === 'image/heic' || 
+        file.type === 'image/heif'
+      ) {
+        setProcessingState('analyzing');
+        try {
+          file = await convertHeicToJpeg(file);
+        } catch (convertError) {
+          console.error('HEIC conversion failed:', convertError);
+          throw new Error('Failed to process HEIC image. Please try a JPG or PNG instead.');
+        }
+      }
+
       // 1. Basic client-side validation
       await validateImageFile(file);
       
@@ -258,7 +277,7 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -322,7 +341,7 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
             {!existingPhoto && (
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                 disabled={processingState === 'analyzing'}
                 onChange={handleFileChange}
                 className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 ${isCameraActive ? 'hidden' : 'block'} disabled:cursor-wait`}

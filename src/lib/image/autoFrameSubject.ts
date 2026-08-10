@@ -51,8 +51,9 @@ export function autoFrameSubject(
     return { x: 0, y: 0, zoom: minZoomToCover };
   }
 
-  // Desired height of the subject in the final crop: ~70% of the container height
-  const desiredSubjectHeightInContainer = containerHeight * 0.7;
+  // Desired height of the subject in the final crop: ~110% of the container height
+  // (This makes the crop much tighter, bringing the face closer to the camera)
+  const desiredSubjectHeightInContainer = containerHeight * 1.1;
   const currentSubjectHeightInContainer = subjectBox.height * baseScale;
 
   let zoom = desiredSubjectHeightInContainer / currentSubjectHeightInContainer;
@@ -70,8 +71,9 @@ export function autoFrameSubject(
 
   // The center of the subject in pixel space:
   const subjectCenterX = subjectBox.x + subjectBox.width / 2;
-  // We want the subject slightly higher than center (e.g., face focus)
-  const subjectCenterY = subjectBox.y + subjectBox.height * 0.4;
+  // The face is typically in the top 10-20% of the upper-body bounding box.
+  // We use 0.15 to ensure the face is the absolute center of the crop.
+  const subjectCenterY = subjectBox.y + subjectBox.height * 0.15;
 
   // The difference between image center and desired subject center
   const diffX = imageCenterX - subjectCenterX;

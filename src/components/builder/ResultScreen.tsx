@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { toJpeg } from 'html-to-image';
+import { convertHeicToJpeg } from "@/lib/image/convertHeic";
 import { ManualPhotoCropper } from './ManualPhotoCropper';
 
 import {
@@ -362,6 +363,20 @@ export const ResultScreen: React.FC<Props> = ({
   const handleShareAnywhere = async () => {
     setIsSharingAnywhere(true);
     const shareUrl = await generateShareUrl();
+    
+    let shareFiles: File[] | undefined;
+    try {
+      const frontDataUrl = await exportCard(exportCardRef.current);
+      if (frontDataUrl) {
+         const response = await fetch(frontDataUrl);
+         const blob = await response.blob();
+         const file = new File([blob], 'HH-Goa-2026-Builder-ID.jpg', { type: 'image/jpeg' });
+         shareFiles = [file];
+      }
+    } catch (e) {
+      console.error('Failed to generate image for sharing', e);
+    }
+    
     setIsSharingAnywhere(false);
 
     if (!shareUrl) {
@@ -372,31 +387,48 @@ export const ResultScreen: React.FC<Props> = ({
       return;
     }
 
-    const shareData = {
+    const shareData: any = {
       title: 'My Hacker House Goa 2026 Builder ID',
       text: 'Check out my Builder ID for Hacker House Goa 2026!',
       url: shareUrl,
     };
+    
+    if (shareFiles && shareFiles.length > 0) {
+      shareData.files = shareFiles;
+    }
 
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          showToast('Failed to share.', 'error');
+    if (navigator.share) {
+      let sharedWithFiles = false;
+      if (shareData.files) {
+        if (!navigator.canShare || navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            sharedWithFiles = true;
+          } catch (err: any) {
+            if (err.name === 'AbortError') return; // User cancelled
+            // If it fails (e.g. browser doesn't support files), we will fall back to text-only below
+          }
         }
       }
-    } else if (navigator.share) {
-      // Sometimes canShare is not supported but share is
-      try {
-        await navigator.share(shareData);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          showToast('Failed to share.', 'error');
+
+      if (!sharedWithFiles) {
+        const { files, ...fallbackData } = shareData;
+        try {
+          await navigator.share(fallbackData);
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            // Both share attempts failed, fallback to clipboard
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              showToast('Share link copied! You can paste it anywhere.', 'success');
+            } catch (clipboardErr) {
+              showToast('Failed to share.', 'error');
+            }
+          }
         }
       }
     } else {
-      // Fallback to clipboard
+      // No navigator.share support, fallback to clipboard
       try {
         await navigator.clipboard.writeText(shareUrl);
         showToast('Share link copied! You can paste it anywhere.', 'success');
@@ -775,11 +807,25 @@ export const ResultScreen: React.FC<Props> = ({
                     <label className="cursor-pointer px-4 py-2 bg-hh-pink/10 border border-hh-pink/30 text-hh-pink font-mono text-[10px] uppercase tracking-widest hover:border-hh-pink hover:bg-hh-pink transition-colors hover:text-white flex items-center justify-center">
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/webp"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                         className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
+                        onChange={async (e) => {
+                          let file = e.target.files?.[0];
                           if (file) {
+                            if (
+                              file.name.toLowerCase().endsWith('.heic') || 
+                              file.name.toLowerCase().endsWith('.heif') || 
+                              file.type === 'image/heic' || 
+                              file.type === 'image/heif'
+                            ) {
+                              try {
+                                file = await convertHeicToJpeg(file);
+                              } catch (convertError) {
+                                console.error('HEIC conversion failed:', convertError);
+                                showToast('Failed to process HEIC image', 'error');
+                                return;
+                              }
+                            }
                             setPendingPhotoEdit(URL.createObjectURL(file));
                           }
                           e.target.value = '';
