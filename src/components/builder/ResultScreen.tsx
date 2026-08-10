@@ -66,7 +66,6 @@ export const ResultScreen: React.FC<Props> = ({
 }) => {
   // We need a stable share ID so the QR code matches the final share URL.
   const [shareId] = useState(() => profile.shareId || Date.now().toString(36) + Math.random().toString(36).substring(2, 7));
-  const displayProfile = { ...profile, shareId };
 
   /*
    * IMPORTANT:
@@ -300,6 +299,7 @@ export const ResultScreen: React.FC<Props> = ({
             image: frontDataUrl,
             profile: {
               ...profileWithoutPhoto,
+              shareId: shareId,
               profilePhoto: backDataUrl, // store the BACK card here for OG image composition
             },
           }),
@@ -486,10 +486,10 @@ export const ResultScreen: React.FC<Props> = ({
     setIsEditing(false);
   };
 
-  const displayProfile =
-    isEditing
-      ? currentEditProfile
-      : profile;
+  const displayProfile = {
+    ...(isEditing ? currentEditProfile : profile),
+    shareId,
+  };
 
   return (
     <>
