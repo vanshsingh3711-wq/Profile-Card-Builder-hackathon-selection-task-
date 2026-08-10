@@ -264,10 +264,10 @@ export const ResultScreen: React.FC<Props> = ({
     }
   };
 
-  const handleShare = async () => {
-    try {
-      setIsSharing(true);
+  const [isSharingAnywhere, setIsSharingAnywhere] = useState(false);
 
+  const generateShareUrl = async (): Promise<string | null> => {
+    try {
       /*
        * Generate the exact same image that the user sees.
        */
@@ -314,40 +314,94 @@ export const ResultScreen: React.FC<Props> = ({
       const { id } =
         await response.json();
 
-      const shareUrl =
-        `${window.location.origin}/share/${id}`;
-
-      const text =
-        `ID Secured for Hacker House Goa 2026.\n\n` +
-        `Who else is building?\n\n` +
-        `#FrameInGoa\n\n` +
-        `${shareUrl}`;
-
-      /*
-       * X intent URL.
-       */
-      const xUrl =
-        `https://x.com/intent/post?text=${encodeURIComponent(
-          text
-        )}`;
-
-      window.open(
-        xUrl,
-        '_blank',
-        'noopener,noreferrer'
-      );
+      return `${window.location.origin}/share/${id}`;
     } catch (err) {
       console.error(
         'Share error:',
         err
       );
+      return null;
+    }
+  };
 
+  const handleShare = async () => {
+    setIsSharing(true);
+    const shareUrl = await generateShareUrl();
+    setIsSharing(false);
+
+    if (!shareUrl) {
       showToast(
         'Failed to connect to X. Try downloading instead.',
         'error'
       );
-    } finally {
-      setIsSharing(false);
+      return;
+    }
+
+    const text =
+      `ID Secured for Hacker House Goa 2026.\n\n` +
+      `Who else is building?\n\n` +
+      `#FrameInGoa\n\n` +
+      `${shareUrl}`;
+
+    /*
+     * X intent URL.
+     */
+    const xUrl =
+      `https://x.com/intent/post?text=${encodeURIComponent(
+        text
+      )}`;
+
+    window.open(
+      xUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  const handleShareAnywhere = async () => {
+    setIsSharingAnywhere(true);
+    const shareUrl = await generateShareUrl();
+    setIsSharingAnywhere(false);
+
+    if (!shareUrl) {
+      showToast(
+        'Failed to generate share link. Try downloading instead.',
+        'error'
+      );
+      return;
+    }
+
+    const shareData = {
+      title: 'My Hacker House Goa 2026 Builder ID',
+      text: 'Check out my Builder ID for Hacker House Goa 2026!',
+      url: shareUrl,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          showToast('Failed to share.', 'error');
+        }
+      }
+    } else if (navigator.share) {
+      // Sometimes canShare is not supported but share is
+      try {
+        await navigator.share(shareData);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          showToast('Failed to share.', 'error');
+        }
+      }
+    } else {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Share link copied! You can paste it anywhere.', 'success');
+      } catch (err) {
+        showToast('Failed to copy link to clipboard.', 'error');
+      }
     }
   };
 
@@ -587,7 +641,7 @@ export const ResultScreen: React.FC<Props> = ({
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={handleShare}
-                    disabled={isExporting || isSharing}
+                    disabled={isExporting || isSharing || isSharingAnywhere}
                     className="group relative flex items-center justify-center gap-3 w-full py-5 bg-hh-pink text-white font-mono font-bold uppercase tracking-[0.2em] text-sm border-2 border-hh-pink shadow-[0_0_15px_rgba(255,20,147,0.4)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] hover:bg-white hover:text-hh-pink transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />}
@@ -595,8 +649,17 @@ export const ResultScreen: React.FC<Props> = ({
                   </button>
 
                   <button
+                    onClick={handleShareAnywhere}
+                    disabled={isExporting || isSharing || isSharingAnywhere}
+                    className="group relative flex items-center justify-center gap-3 w-full py-5 bg-transparent text-hh-cream font-mono font-bold uppercase tracking-[0.2em] text-sm border-2 border-hh-cream/30 hover:bg-white/5 hover:border-hh-cream/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isSharingAnywhere ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />}
+                    Share Anywhere
+                  </button>
+
+                  <button
                     onClick={handleDownload}
-                    disabled={isExporting || isSharing}
+                    disabled={isExporting || isSharing || isSharingAnywhere}
                     className="group relative flex items-center justify-center gap-3 w-full py-4 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_0_10px_rgba(255,223,0,0.2)]"
                   >
                     {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />}
