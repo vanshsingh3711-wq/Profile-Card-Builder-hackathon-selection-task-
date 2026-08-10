@@ -49,12 +49,13 @@ export async function POST(req: NextRequest) {
     if (hasBlobConfig) {
       console.log("[api/share] BEFORE_BLOB");
 
-      // Atomic upload: both image and JSON must succeed, or we clean up.
+      // Atomic upload: all assets must succeed, or we clean up.
       let imageBlobUrl: string | null = null;
       let photoBlobUrl: string | null = null;
+      let jsonBlobUrl: string | null = null;
 
       try {
-        // Step 1: Upload image
+        // Step 1: Upload card image
         const imageBlob = await put(`shares/${id}.jpeg`, buffer, { access: 'public' });
         imageBlobUrl = imageBlob.url;
         console.log("[api/share] IMAGE_UPLOADED");
@@ -83,29 +84,36 @@ export async function POST(req: NextRequest) {
           version: 2
         };
 
-        await put(`shares/${id}.json`, JSON.stringify(profileData), { access: 'public' });
+        const jsonBlob = await put(`shares/${id}.json`, JSON.stringify(profileData), { access: 'public' });
+        jsonBlobUrl = jsonBlob.url;
         console.log("[api/share] PROFILE_UPLOADED");
 
+        // Verify all required assets have valid URLs
+        if (!imageBlobUrl || !jsonBlobUrl) {
+          throw new Error(`Missing required blob URLs: image=${!!imageBlobUrl} json=${!!jsonBlobUrl}`);
+        }
+
+        console.log("[api/share] AFTER_BLOB");
         console.log("[api/share] BEFORE_RESPONSE");
         return NextResponse.json({ id });
       } catch (blobErr) {
         console.error('[api/share] Vercel Blob upload failed:', blobErr);
 
         // Attempt cleanup of any partially uploaded blobs
-        if (imageBlobUrl) {
-          try {
-            await del(imageBlobUrl);
-            console.log("[api/share] CLEANUP: deleted orphaned image blob");
-          } catch (cleanupErr) {
-            console.error('[api/share] CLEANUP_FAILED: could not delete orphaned image blob:', cleanupErr);
-          }
-        }
+        const blobsToCleanup = [imageBlobUrl, jsonBlobUrl];
+        // Only clean up photoBlobUrl if it was actually uploaded (starts with https)
         if (photoBlobUrl && photoBlobUrl.startsWith('https://')) {
-          try {
-            await del(photoBlobUrl);
-            console.log("[api/share] CLEANUP: deleted orphaned photo blob");
-          } catch (cleanupErr) {
-            console.error('[api/share] CLEANUP_FAILED: could not delete orphaned photo blob:', cleanupErr);
+          blobsToCleanup.push(photoBlobUrl);
+        }
+
+        for (const blobUrl of blobsToCleanup) {
+          if (blobUrl) {
+            try {
+              await del(blobUrl);
+              console.log(`[api/share] CLEANUP: deleted orphaned blob ${blobUrl.substring(0, 60)}`);
+            } catch (cleanupErr) {
+              console.error('[api/share] CLEANUP_FAILED:', cleanupErr);
+            }
           }
         }
 

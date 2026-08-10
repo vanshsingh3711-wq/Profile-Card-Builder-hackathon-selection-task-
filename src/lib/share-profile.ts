@@ -45,6 +45,10 @@ const ID_PATTERN = /^[a-z0-9]+$/i;
 
 /** Sanitise the share ID to prevent path traversal / injection. */
 function sanitizeId(raw: string): string | null {
+  // Block path traversal attempts before any processing
+  if (raw.includes('..') || raw.includes('/') || raw.includes('\\')) {
+    return null;
+  }
   const clean = raw.replace(/\.png$/, '').replace(/\.json$/, '');
   if (!clean || !ID_PATTERN.test(clean)) return null;
   return clean;
