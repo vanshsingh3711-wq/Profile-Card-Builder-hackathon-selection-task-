@@ -7,7 +7,7 @@ import { validateImageFile } from "@/lib/image/validateImageFile";
 import { prepareImageForValidation } from "@/lib/image/prepareImageForValidation";
 import { PhotoCropEditor } from './PhotoCropEditor';
 import { convertHeicToJpeg } from "@/lib/image/convertHeic";
-import { detectFaceLocal } from "@/lib/image/detectFaceLocal";
+
 
 interface Props {
   existingPhoto?: string | null;
@@ -147,6 +147,7 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
       const originalObjectUrl = URL.createObjectURL(file);
       
       // 3. Send to Local AI Model
+      const { detectFaceLocal } = await import('@/lib/image/detectFaceLocal');
       const faceBox = await detectFaceLocal(originalObjectUrl);
 
       if (!faceBox) {
