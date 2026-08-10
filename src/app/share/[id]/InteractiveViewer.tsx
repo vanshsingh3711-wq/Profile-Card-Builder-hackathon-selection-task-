@@ -21,13 +21,13 @@ export function InteractiveViewer({ frontImage, backImage, profile }: Interactiv
       
       {/* 2. PAGE HERO & BRANDING */}
       <div className="flex flex-col items-center mb-8 text-center">
-        <div className="mb-4">
+        <div className="mb-6">
           <Image 
-            src="/branding/Hacker house.png" 
-            alt="Hacker House Goa Logo" 
-            width={100} 
-            height={100}
-            className="w-20 md:w-24 h-auto object-contain"
+            src="/branding/2-47.svg" 
+            alt="Hacker House Logo" 
+            width={200} 
+            height={123}
+            className="w-32 md:w-40 h-auto object-contain"
           />
         </div>
         <h1 className="font-bodoni text-3xl md:text-5xl text-hh-yellow uppercase text-center mb-2 tracking-tight">
