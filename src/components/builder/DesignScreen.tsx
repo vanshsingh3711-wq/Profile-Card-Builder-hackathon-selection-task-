@@ -89,7 +89,7 @@ export const DesignScreen: React.FC<Props> = ({ profile, selectedStyle, onStyleS
             </div>
 
             {/* Card thumbnail */}
-            <div className="relative w-full aspect-[4/5] mt-2 border border-black shadow-xl">
+            <div className="relative w-full h-auto mt-2 border border-black shadow-xl">
               <BuilderCard profile={profile} style={id} />
               
               {/* Dark overlay for unselected cards */}

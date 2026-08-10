@@ -75,6 +75,7 @@ export const ResultScreen: React.FC<Props> = ({
    * the exact same rendered card the user sees.
    */
   const exportCardRef = useRef<HTMLDivElement>(null);
+  const backCardRef = useRef<HTMLDivElement>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -159,9 +160,7 @@ export const ResultScreen: React.FC<Props> = ({
    * Because the source DOM is the actual preview,
    * layout and design remain identical.
    */
-  const exportCard = async (): Promise<string | null> => {
-    const element = exportCardRef.current;
-
+  const exportCard = async (element: HTMLDivElement | null): Promise<string | null> => {
     if (!element) {
       return null;
     }
@@ -231,47 +230,35 @@ export const ResultScreen: React.FC<Props> = ({
     try {
       setIsExporting(true);
 
-      const dataUrl = await exportCard();
+      const frontDataUrl = await exportCard(exportCardRef.current);
+      const backDataUrl = await exportCard(backCardRef.current);
 
-      if (!dataUrl) {
-        throw new Error(
-          'Could not find preview card'
-        );
+      if (!frontDataUrl || !backDataUrl) {
+        throw new Error('Could not find preview cards');
       }
 
-      const safeName =
-        profile.name
-          ?.trim()
-          .replace(/\s+/g, '-') || 'Builder';
+      const safeName = profile.name?.trim().replace(/\s+/g, '-') || 'Builder';
 
-      const link =
-        document.createElement('a');
+      // Download Front
+      const linkFront = document.createElement('a');
+      linkFront.download = `HH-Goa-2026-${safeName}-front.jpg`;
+      linkFront.href = frontDataUrl;
+      document.body.appendChild(linkFront);
+      linkFront.click();
+      linkFront.remove();
 
-      link.download =
-        `HH-Goa-2026-${safeName}.jpg`;
+      // Download Back
+      const linkBack = document.createElement('a');
+      linkBack.download = `HH-Goa-2026-${safeName}-back.jpg`;
+      linkBack.href = backDataUrl;
+      document.body.appendChild(linkBack);
+      linkBack.click();
+      linkBack.remove();
 
-      link.href = dataUrl;
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-      showToast(
-        'Frame downloaded successfully!',
-        'success'
-      );
+      showToast('Front and back cards downloaded!', 'success');
     } catch (err) {
-      console.error(
-        'Download error:',
-        err
-      );
-
-      showToast(
-        'Failed to generate image. Try again.',
-        'error'
-      );
+      console.error('Download error:', err);
+      showToast('Failed to generate image. Try again.', 'error');
     } finally {
       setIsExporting(false);
     }
@@ -284,7 +271,7 @@ export const ResultScreen: React.FC<Props> = ({
       /*
        * Generate the exact same image that the user sees.
        */
-      const dataUrl = await exportCard();
+      const dataUrl = await exportCard(isFlipped ? backCardRef.current : exportCardRef.current);
 
       if (!dataUrl) {
         throw new Error(
@@ -544,6 +531,7 @@ export const ResultScreen: React.FC<Props> = ({
                   {/* Back Side */}
                   <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
                     <BackCard
+                      ref={backCardRef}
                       profile={displayProfile}
                       style={cardStyle}
                     />

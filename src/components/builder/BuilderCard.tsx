@@ -34,7 +34,7 @@ export const BuilderCard = React.forwardRef<
    * The downloaded image is captured from this SAME DOM element.
    * Therefore there is no second rendering with different dimensions.
    */
-  const sizeClass = 'w-full aspect-[4/5]';
+  const sizeClass = 'w-full h-auto min-h-[560px] pb-4';
 
   if (style === 'editorial') {
     return (
