@@ -3,12 +3,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSharedProfile } from '@/lib/share-profile';
+import { InteractiveViewer } from './InteractiveViewer';
+
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ id: string }>;
 };
-
-
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -43,8 +44,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
-
-import { InteractiveViewer } from './InteractiveViewer';
 
 export default async function SharePage({ params }: Props) {
   const { id } = await params;
