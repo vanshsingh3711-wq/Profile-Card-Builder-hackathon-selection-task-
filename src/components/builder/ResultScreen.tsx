@@ -12,6 +12,7 @@ import {
   X,
   Check,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 
 import { BuilderCard } from './BuilderCard';
@@ -77,6 +78,11 @@ export const ResultScreen: React.FC<Props> = ({
 
   const [isExporting, setIsExporting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [toast, setToast] = useState<ToastProps | null>(null);
 
@@ -454,46 +460,42 @@ export const ResultScreen: React.FC<Props> = ({
         />
       )}
 
-      <div className="w-full max-w-6xl mx-auto">
+      <div className={`w-full max-w-6xl mx-auto transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
 
         {/* ─────────────────────────────
             Headline
         ───────────────────────────── */}
 
-        <div className="mb-10 flex flex-col gap-3">
-
-          <div className="flex items-center gap-3">
-
-            <div className="h-px flex-1 bg-hh-yellow/30" />
-
-            <span className="font-mono text-xs uppercase tracking-[0.3em] text-hh-yellow">
-              Step 04 / 04
-            </span>
-
-            <div className="h-px flex-1 bg-hh-yellow/30" />
-
+        {/* ─────────────────────────────
+            Headline
+        ───────────────────────────── */}
+        <div className="mb-8 flex flex-col items-center gap-6">
+          <div className="flex items-center justify-center gap-3 w-full max-w-md">
+            <div className="h-px flex-1 bg-hh-yellow/20" />
+            <div className="flex items-center gap-2 px-3 py-1 bg-hh-yellow/5 border border-hh-yellow/20">
+              <div className="w-1.5 h-1.5 bg-hh-yellow animate-pulse" />
+              <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-hh-yellow font-bold">
+                SYS.INIT // 04:04
+              </span>
+            </div>
+            <div className="h-px flex-1 bg-hh-yellow/20" />
           </div>
 
-          <div className="flex flex-col items-center justify-center text-center mt-4">
-
-            <div className="inline-flex items-center gap-4 bg-black/20 px-6 py-2 border border-hh-pink mb-4">
-
-              <div className="w-2.5 h-2.5 bg-hh-pink animate-pulse" />
-
-              <span className="font-mono text-sm uppercase tracking-widest text-hh-pink font-bold">
-                Status: Secured
+          <div className="flex flex-col items-center text-center">
+            <div className="inline-flex items-center gap-3 bg-hh-pink/10 px-4 py-1.5 border border-hh-pink/30 mb-4 rounded-sm">
+              <div className="w-1.5 h-1.5 bg-hh-pink rounded-full animate-pulse shadow-[0_0_8px_rgba(255,20,147,0.8)]" />
+              <span className="font-mono text-[10px] uppercase tracking-widest text-hh-pink font-bold">
+                Identity Matrix Secured
               </span>
-
             </div>
-
-            <h2 className="font-bodoni text-4xl md:text-5xl text-white uppercase leading-none drop-shadow-lg">
-              Your{' '}
-              <span className="text-hh-yellow">
-                Builder ID
-              </span>{' '}
+            <h2 className="font-bodoni text-5xl md:text-6xl text-white uppercase leading-[0.85] tracking-tight">
+              Your <span className="text-hh-yellow">Builder ID</span>
+              <br />
               Is Ready
             </h2>
-
+            <p className="mt-4 font-mono text-[10px] md:text-xs text-hh-cream/50 uppercase tracking-widest max-w-md">
+              The digital artifact of your existence at Hacker House Goa 2026.
+            </p>
           </div>
         </div>
 
@@ -507,71 +509,78 @@ export const ResultScreen: React.FC<Props> = ({
               PREVIEW
           ───────────────────────── */}
 
-          <div className="w-full lg:w-auto lg:sticky lg:top-8 flex flex-col items-center gap-4 shrink-0">
+          <div className="w-full lg:w-auto lg:sticky lg:top-8 flex flex-col items-center gap-6 shrink-0 z-10">
+            {/* The physical frame wrapper */}
+            <div className="relative w-full max-w-[420px] mx-auto p-3 md:p-4 bg-black/40 border border-hh-yellow/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center group">
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-hh-yellow/50" />
+              <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-hh-yellow/50" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-hh-yellow/50" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-hh-yellow/50" />
+              
+              <div className="w-full flex justify-between items-center mb-3 px-1">
+                <span className="font-mono text-[8px] text-hh-yellow/50 uppercase tracking-widest">
+                  Live Render
+                </span>
+                <span className="font-mono text-[8px] text-hh-yellow/50 uppercase tracking-widest flex items-center gap-1.5">
+                  <div className="w-1 h-1 bg-hh-yellow animate-pulse" />
+                  Sync Active
+                </span>
+              </div>
 
-            <div className="relative w-full max-w-[420px] mx-auto perspective-[1000px] transition-transform duration-500 hover:scale-[1.02]">
-              <div 
-                className="relative w-full transition-transform duration-700 [transform-style:preserve-3d]"
-                style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-              >
-                {/* Front Side */}
-                <div className="w-full [backface-visibility:hidden]">
-                  <BuilderCard
-                    ref={exportCardRef}
-                    profile={displayProfile}
-                    style={cardStyle}
-                  />
-                </div>
+              <div className="relative w-full perspective-[1200px] transition-transform duration-500 hover:scale-[1.02]">
+                <div 
+                  className="relative w-full shadow-2xl transition-transform duration-700 [transform-style:preserve-3d]"
+                  style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                >
+                  {/* Front Side */}
+                  <div className="w-full [backface-visibility:hidden]">
+                    <BuilderCard
+                      ref={exportCardRef}
+                      profile={displayProfile}
+                      style={cardStyle}
+                    />
+                  </div>
 
-                {/* Back Side */}
-                <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                  <BackCard
-                    profile={displayProfile}
-                    style={cardStyle}
-                  />
+                  {/* Back Side */}
+                  <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                    <BackCard
+                      profile={displayProfile}
+                      style={cardStyle}
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Flip Button */}
+              <button
+                onClick={() => setIsFlipped(!isFlipped)}
+                className="mt-6 w-full py-3 bg-black/60 border border-hh-yellow/30 text-hh-yellow font-mono text-[10px] uppercase tracking-[0.2em] hover:bg-hh-yellow/10 hover:border-hh-yellow transition-all flex items-center justify-center gap-2"
+                aria-label={isFlipped ? "Flip card to front" : "Flip card to back"}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Show {isFlipped ? 'Front' : 'Back'}
+              </button>
             </div>
 
-            <button
-              onClick={() => setIsFlipped(!isFlipped)}
-              className="mt-2 px-6 py-2 bg-black/40 border border-hh-yellow/50 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:bg-hh-yellow hover:text-[#0A4226] transition-colors"
-              aria-label={isFlipped ? "Flip card to front" : "Flip card to back"}
-            >
-              FLIP CARD
-            </button>
-
             {/* Style switcher */}
-
-            <div className="flex gap-2 mt-1">
-
-              {STYLE_LABELS.map(
-                ({
-                  id,
-                  label,
-                }) => (
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-hh-cream/40">Visual Style</span>
+              <div className="flex bg-black/40 border border-hh-yellow/20 p-1">
+                {STYLE_LABELS.map(({ id, label }) => (
                   <button
                     key={id}
-                    onClick={() =>
-                      onCardStyleChange(id)
-                    }
-                    className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest border transition-all ${
+                    onClick={() => onCardStyleChange(id)}
+                    className={`px-4 py-2 font-mono text-[10px] uppercase tracking-widest transition-all ${
                       cardStyle === id
-                        ? 'bg-hh-yellow text-[#0A4226] border-hh-yellow font-bold'
-                        : 'bg-transparent text-hh-cream/50 border-hh-cream/20 hover:border-hh-yellow/50 hover:text-hh-cream'
+                        ? 'bg-hh-yellow text-[#0A4226] font-bold shadow-[2px_2px_0px_0px_rgba(255,20,147,0.4)]'
+                        : 'bg-transparent text-hh-cream/60 hover:text-hh-cream hover:bg-white/5'
                     }`}
                   >
                     {label}
                   </button>
-                )
-              )}
-
+                ))}
+              </div>
             </div>
-
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-hh-yellow/40">
-              — Live Render —
-            </span>
-
           </div>
 
           {/* ─────────────────────────
@@ -585,196 +594,95 @@ export const ResultScreen: React.FC<Props> = ({
               <div className="flex flex-col gap-6">
 
                 {/* ─────────────────
-                    SPEC SHEET
-                ───────────────── */}
-
-                <div className="relative bg-[#0A4226] border-[3px] border-hh-yellow p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(255,20,147,0.7)]">
-
-                  {/* Barcode */}
-
-                  <div className="absolute top-0 right-0 flex items-start">
-
-                    <div className="flex h-4 gap-0.5 mt-2 mr-4 opacity-40">
-
-                      {[1, 3, 1, 2, 4, 1, 2, 1, 3, 1].map(
-                        (w, i) => (
-                          <div
-                            key={i}
-                            className="h-full bg-hh-yellow"
-                            style={{
-                              width: `${w * 2}px`,
-                            }}
-                          />
-                        )
-                      )}
-
-                    </div>
-
-                    <div className="w-10 h-10 border-b-[3px] border-l-[3px] border-hh-yellow bg-hh-pink flex items-center justify-center">
-
-                      <div className="w-2 h-2 rounded-full bg-white" />
-
-                    </div>
-
-                  </div>
-
-                  <div className="flex flex-col gap-6 mt-4">
-
-                    {/* Name */}
-
-                    <div>
-
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-yellow/70 mb-1">
-                        Subject Name
-                      </p>
-
-                      <p className="font-bodoni text-3xl text-white uppercase">
-                        {profile.name || '—'}
-                      </p>
-
-                    </div>
-
-                    {/* Role */}
-
-                    <div>
-
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-yellow/70 mb-1.5">
-                        Designated Role
-                      </p>
-
-                      <p className="font-mono text-sm font-bold text-[#0A4226] bg-hh-yellow px-3 py-1 inline-block uppercase tracking-widest">
-                        {profile.role || '—'}
-                      </p>
-
-                    </div>
-
-                    {/* Stack */}
-
-                    <div>
-
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-yellow/70 mb-2">
-                        Tech Stack
-                      </p>
-
-                      <div className="flex flex-wrap gap-2">
-
-                        {profile.stack?.length > 0 ? (
-
-                          profile.stack.map(
-                            (t) => (
-                              <span
-                                key={t}
-                                className="px-3 py-1 bg-transparent border border-hh-pink text-hh-pink font-mono text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(255,20,147,0.5)]"
-                              >
-                                {t}
-                              </span>
-                            )
-                          )
-
-                        ) : (
-
-                          <span className="text-white/30 font-mono text-xs">
-                            —
-                          </span>
-
-                        )}
-
-                      </div>
-
-                    </div>
-
-                    {/* Builder title */}
-
-                    <div className="pt-4 border-t border-dashed border-hh-yellow/30">
-
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-yellow/70 mb-1">
-                        Generated Title
-                      </p>
-
-                      <p className="font-bodoni text-2xl text-hh-pink uppercase drop-shadow-md">
-                        {profile.builderTitle || '—'}
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* ─────────────────
                     ACTIONS
                 ───────────────── */}
-
-                <div className="flex flex-col gap-4 mt-2">
-
-                  {/* Share */}
-
+                <div className="flex flex-col gap-3">
                   <button
                     onClick={handleShare}
-                    disabled={
-                      isExporting ||
-                      isSharing
-                    }
-                    className="group relative flex items-center justify-center gap-3 w-full py-5 bg-hh-pink text-white font-mono font-bold uppercase tracking-[0.2em] text-sm border-2 border-hh-pink shadow-[4px_4px_0_0_rgba(255,223,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(255,223,0,1)] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isExporting || isSharing}
+                    className="group relative flex items-center justify-center gap-3 w-full py-5 bg-hh-pink text-white font-mono font-bold uppercase tracking-[0.2em] text-sm border-2 border-hh-pink shadow-[0_0_15px_rgba(255,20,147,0.4)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] hover:bg-white hover:text-hh-pink transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-
-                    {isSharing ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    )}
-
+                    {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />}
                     Broadcast to X
-
                   </button>
-
-                  {/* Download */}
 
                   <button
                     onClick={handleDownload}
-                    disabled={
-                      isExporting ||
-                      isSharing
-                    }
-                    className="group relative flex items-center justify-center gap-3 w-full py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm border-2 border-hh-yellow shadow-[4px_4px_0_0_rgba(255,20,147,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(255,20,147,1)] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isExporting || isSharing}
+                    className="group relative flex items-center justify-center gap-3 w-full py-4 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_0_10px_rgba(255,223,0,0.2)]"
                   >
-
-                    {isExporting ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                    )}
-
+                    {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />}
                     Download Image
-
                   </button>
+                </div>
 
-                  {/* Edit / Restart */}
-
-                  <div className="flex gap-4 mt-2">
-
+                {/* ─────────────────
+                    SPEC SHEET
+                ───────────────── */}
+                <div className="relative bg-[#041008] border border-hh-yellow/30 p-6 md:p-8 shadow-2xl flex flex-col gap-6 mt-2">
+                  <div className="flex items-center justify-between border-b border-hh-yellow/20 pb-4">
+                    <span className="font-mono text-sm font-bold uppercase tracking-widest text-hh-yellow">
+                      Identity Record
+                    </span>
                     <button
                       onClick={() => {
                         setEditProfile(profile);
                         setIsEditing(true);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 py-4 bg-black/20 border border-hh-yellow/30 text-hh-yellow font-mono uppercase tracking-widest text-xs hover:border-hh-yellow hover:bg-hh-yellow/10 transition-colors"
+                      className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-hh-pink border border-hh-pink/30 px-3 py-1.5 hover:bg-hh-pink/10 transition-colors"
                     >
-                      <Pencil className="w-3 h-3" />
-                      Edit Data
+                      <Pencil className="w-3 h-3" /> Edit Data
                     </button>
-
-                    <button
-                      onClick={onRestart}
-                      className="flex-1 py-4 bg-black/20 border border-hh-yellow/30 text-hh-yellow font-mono uppercase tracking-widest text-xs hover:border-hh-yellow hover:bg-hh-yellow/10 transition-colors"
-                    >
-                      Restart
-                    </button>
-
                   </div>
 
-                </div>
+                  <div className="flex flex-col gap-5">
+                    {/* Name */}
+                    <div>
+                      <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-hh-yellow/50 mb-1">Subject Name</p>
+                      <p className="font-bodoni text-3xl text-white uppercase">{profile.name || '—'}</p>
+                    </div>
 
+                    {/* Role & Title */}
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      <div className="flex-1">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-hh-yellow/50 mb-1.5">Designated Role</p>
+                        <p className="font-mono text-xs font-bold text-hh-yellow uppercase tracking-widest">{profile.role || '—'}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-hh-yellow/50 mb-1.5">Builder Title</p>
+                        <p className="font-mono text-xs font-bold text-hh-pink uppercase tracking-widest">{profile.builderTitle || '—'}</p>
+                      </div>
+                    </div>
+
+                    {/* Stack */}
+                    <div>
+                      <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-hh-yellow/50 mb-2">Tech Stack Matrix</p>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.stack?.length > 0 ? (
+                          profile.stack.map((t) => (
+                            <span
+                              key={t}
+                              className="px-2.5 py-1 bg-black/40 border border-hh-yellow/20 text-hh-cream font-mono text-[10px] uppercase tracking-wider"
+                            >
+                              {t}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-white/30 font-mono text-xs">—</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 pt-4 border-t border-hh-yellow/10">
+                    <button
+                      onClick={onRestart}
+                      className="w-full py-3 bg-transparent border border-hh-cream/10 text-hh-cream/50 font-mono text-[10px] uppercase tracking-widest hover:text-white hover:border-hh-cream/30 transition-colors"
+                    >
+                      Start Over Completely
+                    </button>
+                  </div>
+                </div>
               </div>
 
             ) : (
@@ -783,37 +691,36 @@ export const ResultScreen: React.FC<Props> = ({
                  INLINE EDITOR
               ───────────────────── */
 
-              <div className="flex flex-col gap-8 bg-[#0A4226] border-[3px] border-hh-yellow p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(255,223,0,0.5)]">
-
-                <div className="flex items-center justify-between border-b border-hh-yellow/30 pb-4">
-
-                  <h3 className="font-bodoni text-2xl text-hh-yellow uppercase">
-                    Override Identity
-                  </h3>
-
+              <div className="flex flex-col gap-6 bg-[#041008] border border-hh-pink/40 p-6 md:p-8 shadow-2xl animate-in fade-in duration-300">
+                <div className="flex items-center justify-between border-b border-hh-pink/20 pb-4">
+                  <div className="flex flex-col">
+                    <h3 className="font-bodoni text-2xl text-hh-pink uppercase">Override Identity</h3>
+                    <span className="font-mono text-[9px] uppercase tracking-widest text-hh-cream/40 mt-1">Manual reconfiguration</span>
+                  </div>
                   <button
-                    onClick={() =>
-                      setIsEditing(false)
-                    }
-                    className="text-hh-pink hover:text-white transition-colors bg-hh-pink/10 p-2 border border-hh-pink/30"
+                    onClick={() => setIsEditing(false)}
+                    className="text-hh-cream/50 hover:text-white transition-colors bg-black/40 p-2 border border-hh-cream/10 hover:bg-white/5"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
-
                 </div>
 
                 {/* Photo */}
-                <div className="flex flex-col gap-3">
-                  <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                <div className="flex flex-col gap-2">
+                  <label className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-pink/70">
                     Profile Photo
                   </label>
-                  <div className="flex items-center gap-4">
-                    {currentEditProfile.photo && (
-                      <div className="w-14 h-14 shrink-0 rounded-full overflow-hidden border border-hh-yellow/50">
-                        <img src={currentEditProfile.photo} alt="Profile" className="w-full h-full object-cover" />
+                  <div className="flex items-center gap-4 bg-black/40 border border-hh-pink/20 p-3">
+                    {currentEditProfile.photo ? (
+                      <div className="w-12 h-12 shrink-0 rounded-sm overflow-hidden border border-hh-pink/50">
+                        <img src={currentEditProfile.photo} alt="Profile" className="w-full h-full object-cover grayscale" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 shrink-0 bg-black/60 border border-hh-pink/30 flex items-center justify-center">
+                        <span className="font-mono text-[8px] text-hh-pink/50">NONE</span>
                       </div>
                     )}
-                    <label className="cursor-pointer px-4 py-3 bg-black/30 border-[2px] border-hh-yellow/30 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:border-hh-yellow hover:bg-hh-yellow/10 transition-colors flex items-center justify-center">
+                    <label className="cursor-pointer px-4 py-2 bg-hh-pink/10 border border-hh-pink/30 text-hh-pink font-mono text-[10px] uppercase tracking-widest hover:border-hh-pink hover:bg-hh-pink transition-colors hover:text-white flex items-center justify-center">
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
@@ -826,138 +733,82 @@ export const ResultScreen: React.FC<Props> = ({
                           e.target.value = '';
                         }}
                       />
-                      Change Photo
+                      Upload Replacement
                     </label>
                   </div>
                 </div>
 
                 {/* Name */}
-
-                <div className="flex flex-col gap-3">
-
-                  <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                <div className="flex flex-col gap-2">
+                  <label className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-pink/70">
                     Subject Name
                   </label>
-
                   <input
                     type="text"
                     value={currentEditProfile.name}
-                    onChange={(e) =>
-                      setEditProfile(
-                        (p) => ({
-                          ...p,
-                          name: e.target.value,
-                        })
-                      )
-                    }
-                    className="w-full bg-black/30 border-[2px] border-hh-yellow/30 focus:border-hh-pink outline-none text-white font-bodoni text-3xl px-4 py-3 uppercase placeholder:text-white/10 transition-colors"
+                    onChange={(e) => setEditProfile((p) => ({ ...p, name: e.target.value }))}
+                    className="w-full bg-black/40 border border-hh-pink/30 focus:border-hh-pink focus:bg-hh-pink/5 outline-none text-white font-bodoni text-2xl px-4 py-3 uppercase placeholder:text-white/10 transition-colors shadow-inner"
                   />
-
                 </div>
 
                 {/* Role */}
-
-                <div className="flex flex-col gap-3">
-
-                  <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                <div className="flex flex-col gap-2">
+                  <label className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-pink/70">
                     Designated Role
                   </label>
-
                   <input
                     type="text"
                     value={currentEditProfile.role}
-                    onChange={(e) =>
-                      setEditProfile(
-                        (p) => ({
-                          ...p,
-                          role: e.target.value,
-                        })
-                      )
-                    }
-                    className="w-full bg-black/30 border-[2px] border-hh-yellow/30 focus:border-hh-pink outline-none text-white font-mono text-lg px-4 py-3 uppercase placeholder:text-white/10 transition-colors"
+                    onChange={(e) => setEditProfile((p) => ({ ...p, role: e.target.value }))}
+                    className="w-full bg-black/40 border border-hh-pink/30 focus:border-hh-pink focus:bg-hh-pink/5 outline-none text-white font-mono text-base px-4 py-3 uppercase placeholder:text-white/10 transition-colors shadow-inner"
                   />
-
                 </div>
 
                 {/* Stack */}
-
-                <StackEditor
-                  stack={currentEditProfile.stack}
-                  stackInput={stackInput}
-                  onInputChange={
-                    setStackInput
-                  }
-                  onAdd={addEditStack}
-                  onRemove={
-                    removeEditStack
-                  }
-                  variant="box"
-                />
+                <div className="flex flex-col gap-2">
+                  <StackEditor
+                    stack={currentEditProfile.stack}
+                    stackInput={stackInput}
+                    onInputChange={setStackInput}
+                    onAdd={addEditStack}
+                    onRemove={removeEditStack}
+                    variant="box"
+                  />
+                </div>
 
                 {/* Builder title */}
-
-                <div className="flex flex-col gap-3">
-
+                <div className="flex flex-col gap-2">
                   <div className="flex justify-between items-end">
-                    <label className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-hh-yellow/70">
+                    <label className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-hh-pink/70">
                       Builder Title
                     </label>
-
                     <button 
                       onClick={handleGenerateTitle}
                       disabled={isGeneratingTitle}
-                      className="text-[10px] font-mono text-hh-pink hover:text-white uppercase tracking-widest flex items-center gap-1 disabled:opacity-50 transition-colors"
+                      className="text-[9px] px-2 py-1 bg-hh-yellow/10 border border-hh-yellow/30 font-mono text-hh-yellow hover:bg-hh-yellow hover:text-[#0A4226] uppercase tracking-widest flex items-center gap-1 disabled:opacity-50 transition-colors"
                     >
                       {isGeneratingTitle ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                      {isGeneratingTitle ? 'Generating...' : 'Generate Title'}
+                      {isGeneratingTitle ? 'Generating...' : 'Auto-Generate'}
                     </button>
                   </div>
-
                   <input
                     type="text"
-                    value={
-                      currentEditProfile.builderTitle
-                    }
-                    onChange={(e) =>
-                      setEditProfile(
-                        (p) => ({
-                          ...p,
-                          builderTitle:
-                            e.target.value,
-                        })
-                      )
-                    }
-                    className="w-full bg-black/30 border-[2px] border-hh-yellow/30 focus:border-hh-pink outline-none text-hh-pink font-bodoni text-3xl px-4 py-3 uppercase placeholder:text-white/10 transition-colors"
+                    value={currentEditProfile.builderTitle}
+                    onChange={(e) => setEditProfile((p) => ({ ...p, builderTitle: e.target.value }))}
+                    className="w-full bg-black/40 border border-hh-pink/30 focus:border-hh-pink focus:bg-hh-pink/5 outline-none text-hh-pink font-bodoni text-2xl px-4 py-3 uppercase placeholder:text-white/10 transition-colors shadow-inner"
                   />
-
                 </div>
 
                 {/* Save */}
-
                 <div className="flex flex-col gap-3 mt-4">
-
                   <button
                     onClick={saveEdit}
-                    className="w-full flex items-center justify-center gap-2 py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-widest text-sm hover:bg-white border-2 border-hh-yellow shadow-[4px_4px_0_0_rgba(255,20,147,0.7)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(255,20,147,0.7)] transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-hh-pink text-white font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-hh-pink transition-all shadow-[0_0_15px_rgba(255,20,147,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]"
                   >
-
                     <Check className="w-5 h-5" />
-
-                    Confirm Override
-
+                    Commit Changes
                   </button>
-
-                  <button
-                    onClick={() =>
-                      setIsEditing(false)
-                    }
-                    className="w-full py-4 border-2 border-hh-yellow/30 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:border-hh-yellow hover:bg-hh-yellow/10 transition-colors mt-2"
-                  >
-                    Cancel
-                  </button>
-
                 </div>
-
               </div>
 
             )}

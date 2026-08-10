@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BuilderProfile } from '@/types/builder';
 import QRCode from 'react-qr-code';
-import { HHLogo } from './card-shared';
+import { HHLogo, generateBuilderId } from './card-shared';
 
 const FILTER_MATRIX_GREEN = 'brightness(0) saturate(100%) invert(58%) sepia(97%) saturate(3681%) hue-rotate(85deg) brightness(108%) contrast(106%)';
 
@@ -9,6 +9,7 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
   ({ profile }, ref) => {
     const sizeClass = 'w-full h-full';
     const [qrUrl, setQrUrl] = useState('');
+    const builderId = generateBuilderId(profile.name);
 
     useEffect(() => {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hackerhousegoa.com';
@@ -31,8 +32,9 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
         {/* Top Header */}
         <div className="relative flex justify-between items-center w-full pb-2 z-20 border-b border-[#00FF41]/15 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-[#00FF41]/50 text-[6.5px] md:text-[7.5px] tracking-[0.2em] uppercase font-bold">
-              SYS_VERIFY // IDENTITY
+            <span className="text-[#00FF41]/50 text-[6.5px] md:text-[7.5px] tracking-[0.2em] uppercase font-bold flex flex-col gap-0.5">
+              <span>HACKER HOUSE GOA 2026</span>
+              <span className="text-[#00FF41]">BUILDER ID // {builderId}</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -57,7 +59,7 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
           </div>
           <div className="text-center">
             <span className="block text-[#00FF41]/50 text-[6.5px] uppercase tracking-[0.2em] font-bold">
-              {'>'} AUTHENTICATE_USER
+              {'>'} SCAN_TO_IDENTIFY // BUILDER_PROFILE
             </span>
             <span className="font-mono text-[8px] md:text-[9px] text-[#00FF41] font-bold uppercase tracking-widest mt-1">
               /share/{profile.name?.trim().replace(/\s+/g, '-').toLowerCase() || 'builder'}

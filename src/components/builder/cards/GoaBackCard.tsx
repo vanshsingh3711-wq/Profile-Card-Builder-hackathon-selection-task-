@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { BuilderProfile } from '@/types/builder';
 import QRCode from 'react-qr-code';
-import { HHLogo, FILTER_YELLOW } from './card-shared';
+import { HHLogo, FILTER_YELLOW, generateBuilderId } from './card-shared';
 
 export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile }>(
   ({ profile }, ref) => {
     const sizeClass = 'w-full h-full';
     const [qrUrl, setQrUrl] = useState('');
+    const builderId = generateBuilderId(profile.name);
 
     useEffect(() => {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://profile-card-builder-hackathon-selection-task-b9ronmlit.vercel.app/';
@@ -29,7 +30,10 @@ export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderPr
           <HHLogo filter={FILTER_YELLOW} />
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-white/40 text-[6.5px] md:text-[7px] font-bold tracking-[0.2em] uppercase">
-              IDENTITY
+              HACKER HOUSE GOA 2026
+            </span>
+            <span className="text-hh-yellow text-[5.5px] md:text-[6px] font-bold tracking-[0.2em] uppercase mt-0.5">
+              BUILDER ID // {builderId}
             </span>
           </div>
         </div>
@@ -49,7 +53,7 @@ export const GoaBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderPr
             )}
           </div>
           <span className="font-mono text-[7px] md:text-[8px] text-hh-yellow uppercase tracking-widest bg-black/40 px-3 py-1 border border-hh-yellow/20">
-            SCAN TO VERIFY BUILDER
+            SCAN TO IDENTIFY // BUILDER PROFILE
           </span>
         </div>
 

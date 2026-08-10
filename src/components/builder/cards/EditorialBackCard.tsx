@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { BuilderProfile } from '@/types/builder';
 import QRCode from 'react-qr-code';
-import { HHLogo, FILTER_GREEN } from './card-shared';
+import { HHLogo, FILTER_GREEN, generateBuilderId } from './card-shared';
 
 export const EditorialBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile }>(
   ({ profile }, ref) => {
     const sizeClass = 'w-full h-full';
     const [qrUrl, setQrUrl] = useState('');
+    const builderId = generateBuilderId(profile.name);
 
     useEffect(() => {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hackerhousegoa.com';
@@ -27,7 +28,10 @@ export const EditorialBackCard = React.forwardRef<HTMLDivElement, { profile: Bui
           <HHLogo filter={FILTER_GREEN} />
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-[#0A4226]/40 text-[6.5px] md:text-[7px] font-bold tracking-[0.25em] uppercase">
-              IDENTITY VERIFICATION
+              HACKER HOUSE GOA 2026
+            </span>
+            <span className="text-[#0A4226] text-[5.5px] md:text-[6px] font-bold tracking-[0.2em] uppercase mt-0.5">
+              BUILDER ID // {builderId}
             </span>
           </div>
         </div>
@@ -47,8 +51,8 @@ export const EditorialBackCard = React.forwardRef<HTMLDivElement, { profile: Bui
               <div className="w-[140px] h-[140px] bg-gray-200" />
             )}
           </div>
-          <span className="font-mono text-[9px] text-[#0A4226] font-bold uppercase tracking-widest px-3 py-1 bg-[#0A4226]/5 border border-[#0A4226]/10">
-            SCAN TO VERIFY
+          <span className="font-mono text-[8px] text-[#0A4226] font-bold uppercase tracking-widest px-3 py-1 bg-[#0A4226]/5 border border-[#0A4226]/10">
+            SCAN TO IDENTIFY // BUILDER PROFILE
           </span>
         </div>
 

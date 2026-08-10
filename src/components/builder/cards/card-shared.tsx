@@ -7,6 +7,17 @@
 import React from 'react';
 import { BuilderProfile } from '@/types/builder';
 
+export const generateBuilderId = (name: string | null) => {
+  const safeName = (name || 'BUILDER').toUpperCase().trim();
+  let hash = 0;
+  for (let i = 0; i < safeName.length; i++) {
+    hash = (hash << 5) - hash + safeName.charCodeAt(i);
+    hash |= 0;
+  }
+  const hex = Math.abs(hash).toString(16).toUpperCase().padStart(4, '0').slice(0, 4);
+  return `HHG26-${hex}`;
+};
+
 // ─── CSS filter presets for SVG/PNG branding assets ───────────────────────────
 export const FILTER_YELLOW =
   'brightness(0) saturate(100%) invert(86%) sepia(50%) saturate(1048%) hue-rotate(352deg) brightness(106%) contrast(104%)';

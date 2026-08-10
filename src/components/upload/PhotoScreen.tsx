@@ -206,27 +206,48 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
       
       {/* CAMERA PREVIEW - FULL SCREEN OVERLAY */}
       {isCameraActive && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col animate-in fade-in duration-200">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4 px-6">
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); capturePhoto(); }}
-              className="px-8 py-4 bg-hh-yellow text-[#060B08] font-mono text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors shadow-[0_0_20px_rgba(255,223,0,0.5)]"
-            >
-              Capture
-            </button>
+        <div className="fixed inset-0 z-50 bg-[#060B08] flex flex-col animate-in fade-in duration-300">
+          <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20 bg-gradient-to-b from-black/80 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="font-mono text-[10px] text-red-500 uppercase tracking-widest font-bold">REC</span>
+            </div>
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopCamera(); }}
-              className="px-8 py-4 bg-black/50 border border-white/30 text-white font-mono text-sm uppercase tracking-widest hover:bg-white/10 transition-colors"
+              className="font-mono text-[10px] text-white/50 hover:text-white uppercase tracking-widest"
             >
-              Cancel
+              [ ESC ]
+            </button>
+          </div>
+          
+          <div className="relative flex-1 w-full flex items-center justify-center p-0 md:p-8">
+            <div className="relative w-full h-full md:max-w-3xl border-0 md:border border-white/10 bg-black flex items-center justify-center overflow-hidden">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Viewfinder overlay */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-[65%] md:w-[320px] aspect-[3/4] border border-white/20 relative">
+                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/80" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white/80" />
+                  <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white/80" />
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/80" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center bg-gradient-to-t from-black/90 via-black/60 to-transparent z-20">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); capturePhoto(); }}
+              className="w-16 h-16 rounded-full border-[3px] border-hh-yellow flex items-center justify-center hover:bg-hh-yellow/10 transition-colors group"
+            >
+              <div className="w-12 h-12 rounded-full bg-hh-yellow group-hover:scale-95 transition-transform shadow-[0_0_15px_rgba(255,223,0,0.5)]" />
             </button>
           </div>
         </div>
@@ -254,20 +275,23 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
           {/* STEP HEADER */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-hh-yellow/30" />
-              <span className="font-mono text-xs uppercase tracking-[0.3em] text-hh-yellow">
-                Step 01 / 04
-              </span>
-              <div className="h-px flex-1 bg-hh-yellow/30" />
+              <div className="h-px flex-1 bg-hh-yellow/20" />
+              <div className="flex items-center gap-2 px-3 py-1 bg-hh-yellow/5 border border-hh-yellow/20">
+                <div className="w-1.5 h-1.5 bg-hh-yellow animate-pulse" />
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-hh-yellow font-bold">
+                  SYS.INIT // 01:04
+                </span>
+              </div>
+              <div className="h-px flex-1 bg-hh-yellow/20" />
             </div>
-            <div className="text-center">
+            <div className="text-center mt-2">
               <h1 className="font-bodoni text-5xl md:text-6xl text-hh-yellow uppercase leading-[0.85]">
-                Build Your
+                Upload Your
                 <br />
-                <span className="text-white">Builder Identity</span>
+                <span className="text-white">Photo</span>
               </h1>
-              <p className="mt-5 font-mono text-xs md:text-sm text-hh-cream/50 uppercase tracking-widest">
-                Hacker House Goa 2026 &middot; 28–31 Oct &middot; #FrameInGoa
+              <p className="mt-6 font-mono text-xs md:text-sm text-hh-cream/60 uppercase tracking-widest max-w-md mx-auto">
+                Begin creating your Builder Identity for Hacker House Goa 2026.
               </p>
             </div>
           </div>
@@ -285,13 +309,13 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
               handleDrop(e);
             }}
             className={`
-              relative overflow-hidden min-h-[360px] border-[3px] border-dashed transition-all duration-300 bg-black/10 group
+              relative overflow-hidden min-h-[380px] border-[2px] transition-all duration-300 group
               ${
                 existingPhoto
-                  ? 'border-hh-yellow/20'
+                  ? 'border-hh-yellow/20 bg-black/40'
                   : isDragging
-                    ? 'border-hh-yellow bg-hh-yellow/10 scale-[1.01]'
-                    : 'border-hh-yellow/40 hover:border-hh-yellow hover:bg-hh-yellow/5'
+                    ? 'border-hh-yellow border-dashed bg-hh-yellow/10 scale-[1.01]'
+                    : 'border-hh-yellow/30 border-dashed bg-[#041008] hover:border-hh-yellow/60 hover:bg-[#06180C]'
               }
             `}
           >
@@ -327,51 +351,79 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
               </div>
             )}
 
-            {/* PREVIEW STATE (If they hit Back after cropping) */}
+            {/* PREVIEW STATE */}
             {processingState === 'idle' && existingPhoto && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/20 p-6">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-hh-yellow shadow-[0_0_15px_rgba(255,223,0,0.3)]">
-                  <img src={existingPhoto} alt="Selected profile" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#07120C]">
+                
+                {/* Background blurred photo for aesthetics */}
+                <div 
+                  className="absolute inset-0 opacity-20 blur-xl scale-110"
+                  style={{ backgroundImage: `url(${existingPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                />
+                
+                <div className="relative z-10 w-36 h-36 md:w-48 md:h-48 rounded-none border border-hh-yellow/30 bg-black p-1.5 md:p-2 shadow-2xl mb-8">
+                  <div className="w-full h-full relative overflow-hidden border border-hh-yellow/10">
+                    <img src={existingPhoto} alt="Selected profile" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
+                    <div className="absolute inset-0 border border-hh-yellow/20 pointer-events-none mix-blend-overlay" />
+                  </div>
+                  
+                  {/* Decorative corner brackets */}
+                  <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-hh-yellow" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 border-t border-r border-hh-yellow" />
+                  <div className="absolute -bottom-1 -left-1 w-2 h-2 border-b border-l border-hh-yellow" />
+                  <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-hh-yellow" />
                 </div>
-                <p className="font-bodoni text-2xl text-white mt-2">Photo Selected</p>
-                <div className="flex gap-4 mt-2">
-                  <button
-                    onClick={handleChangePhoto}
-                    className="px-6 py-2 border border-hh-yellow/30 text-hh-yellow font-mono text-xs uppercase tracking-widest hover:bg-hh-yellow/10 transition-colors"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 inline mr-2" />
-                    Change Photo
-                  </button>
-                  <button
-                    onClick={handleContinueWithExisting}
-                    className="px-6 py-2 bg-hh-yellow text-[#060B08] font-mono text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors shadow-[0_0_15px_rgba(255,223,0,0.4)]"
-                  >
-                    Continue <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
-                  </button>
+
+                <div className="relative z-10 flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    <span className="font-mono text-[10px] text-green-500 uppercase tracking-widest">
+                      Photo Accepted
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleChangePhoto}
+                      className="px-5 py-2.5 border border-hh-yellow/30 bg-black/40 text-hh-yellow font-mono text-[10px] font-bold uppercase tracking-widest hover:bg-hh-yellow/10 transition-colors flex items-center gap-2"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Reselect
+                    </button>
+                    <button
+                      onClick={handleContinueWithExisting}
+                      className="px-6 py-2.5 bg-hh-yellow text-[#060B08] font-mono text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors shadow-[0_0_15px_rgba(255,223,0,0.2)] hover:shadow-[0_0_20px_rgba(255,223,0,0.4)] flex items-center gap-2"
+                    >
+                      Continue
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* EMPTY STATE */}
             {processingState === 'idle' && !existingPhoto && (
-              <div className="flex flex-col items-center justify-center min-h-[360px] gap-6 py-14 px-8 text-center">
-                <div className="relative">
+              <div className="flex flex-col items-center justify-center min-h-[380px] gap-6 py-10 px-6 text-center">
+                <div className="relative group-hover:scale-110 transition-transform duration-500">
                   <div className="absolute inset-0 bg-hh-yellow/10 blur-2xl rounded-full scale-150" />
-                  <UploadCloud
-                    className={`relative w-16 h-16 transition-colors ${
-                      isDragging ? 'text-hh-pink' : 'text-hh-yellow/60 group-hover:text-hh-yellow'
-                    }`}
-                  />
+                  <UploadCloud className="relative w-12 h-12 text-hh-yellow/60 group-hover:text-hh-yellow transition-colors" />
                 </div>
                 <div>
-                  <p className="font-bodoni text-4xl text-hh-yellow uppercase mb-3">
-                    {isDragging ? 'Drop It Here' : 'Drop Your Photo'}
+                  <p className="font-mono text-sm font-bold text-hh-yellow uppercase tracking-widest mb-2">
+                    {isDragging ? 'Drop Image Here' : 'Select an Image'}
                   </p>
-                  <p className="font-mono text-xs text-hh-cream/50 uppercase tracking-widest leading-relaxed">
-                    or click anywhere to upload
+                  <p className="font-mono text-[10px] text-hh-cream/40 uppercase tracking-widest leading-relaxed">
+                    Drag and drop or click to browse
                     <br />
-                    JPG &middot; PNG &middot; WEBP
+                    High-quality JPG, PNG, or WEBP
                   </p>
+                </div>
+
+                <div className="flex items-center w-full max-w-[200px] gap-4 my-1">
+                  <div className="h-px flex-1 bg-hh-yellow/20" />
+                  <span className="font-mono text-[9px] text-hh-yellow/50 uppercase tracking-widest">OR</span>
+                  <div className="h-px flex-1 bg-hh-yellow/20" />
                 </div>
                 
                 <button
@@ -381,18 +433,19 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
                     e.stopPropagation();
                     startCamera();
                   }}
-                  className="relative z-30 mt-2 px-6 py-3 bg-hh-yellow text-[#060B08] font-mono text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors"
+                  className="relative z-30 px-6 py-3 border border-hh-yellow/30 bg-black/40 text-hh-yellow font-mono text-[10px] font-bold uppercase tracking-widest hover:bg-hh-yellow hover:text-[#060B08] transition-colors"
                 >
-                  Take Photo
+                  Take Photo with Camera
                 </button>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {['PERSON', 'ANIME', 'CHARACTER'].map((type) => (
-                    <span
-                      key={type}
-                      className="px-3 py-1 border border-hh-yellow/20 text-hh-yellow/50 font-mono text-[8px] tracking-widest"
-                    >
-                      {type}
-                    </span>
+
+                <div className="flex flex-wrap justify-center gap-3 mt-4">
+                  {['Clear Face', 'Good Lighting', 'One Person'].map((req) => (
+                    <div key={req} className="flex items-center gap-1.5">
+                      <div className="w-1 h-1 bg-hh-yellow/40 rounded-sm" />
+                      <span className="font-mono text-[9px] text-hh-cream/50 tracking-widest uppercase">
+                        {req}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -401,32 +454,34 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
 
           {/* ERROR */}
           {error && (
-            <div className="flex items-start gap-3 border border-red-400/30 bg-red-400/5 px-4 py-4 animate-in fade-in duration-300">
+            <div className="flex items-start gap-4 border border-red-500/30 bg-red-500/5 px-5 py-4 animate-in fade-in slide-in-from-top-2 duration-300 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50" />
               <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-mono text-xs font-bold text-red-400 uppercase tracking-widest">
-                  Image Not Accepted
+              <div className="flex-1">
+                <p className="font-mono text-[11px] font-bold text-red-400 uppercase tracking-widest mb-1">
+                  Validation Failed
                 </p>
-                <p className="mt-1 font-mono text-[10px] text-red-300/70 leading-relaxed">
+                <p className="font-mono text-[10px] text-red-300/80 leading-relaxed uppercase">
                   {error}
                 </p>
               </div>
             </div>
           )}
 
-          {/* BRANDING */}
-          <div className="flex items-center gap-6 border-t border-hh-yellow/20 pt-6">
-            <img
-              src="/branding/2-47.svg"
-              alt="2:47 PM STUDIO"
-              className="h-8 opacity-60"
-              style={{
-                filter: 'brightness(0) saturate(100%) invert(86%) sepia(50%) saturate(1048%) hue-rotate(352deg) brightness(106%) contrast(104%)',
-              }}
-            />
-            <div className="h-6 w-px bg-hh-yellow/20" />
-            <span className="font-mono text-xs text-hh-yellow/60 uppercase tracking-widest">
-              Goa, India
+          {/* BRANDING FOOTER */}
+          <div className="flex items-center justify-between border-t border-hh-yellow/10 pt-6 mt-2">
+            <div className="flex items-center gap-4">
+              <img
+                src="/branding/2-47.svg"
+                alt="2:47 PM STUDIO"
+                className="h-6 opacity-40 hover:opacity-100 transition-opacity"
+                style={{
+                  filter: 'brightness(0) saturate(100%) invert(86%) sepia(50%) saturate(1048%) hue-rotate(352deg) brightness(106%) contrast(104%)',
+                }}
+              />
+            </div>
+            <span className="font-mono text-[9px] text-hh-yellow/40 uppercase tracking-widest">
+              SYSTEM.READY
             </span>
           </div>
         </>

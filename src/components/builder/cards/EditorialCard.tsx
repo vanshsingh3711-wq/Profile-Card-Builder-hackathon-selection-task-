@@ -7,13 +7,14 @@
 
 import React from 'react';
 import { PenTool } from 'lucide-react';
-import { FILTER_GREEN, HHLogo, CardInnerProps } from './card-shared';
+import { FILTER_GREEN, HHLogo, CardInnerProps, generateBuilderId } from './card-shared';
 import { CardPhoto } from './CardPhoto';
 
 export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
   ({ profile, sizeClass }, ref) => {
     const displayStack =
       profile.stack?.length > 0 ? profile.stack : ['NEXT.JS', 'TYPESCRIPT', 'PYTHON'];
+    const builderId = generateBuilderId(profile.name);
 
     return (
       <div
@@ -35,6 +36,9 @@ export const EditorialCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             />
             <span className="text-[#0A4226]/40 text-[6.5px] md:text-[7px] font-bold tracking-[0.25em] uppercase">
               EST. 2026
+            </span>
+            <span className="text-[#0A4226] text-[5px] md:text-[5.5px] font-bold tracking-[0.2em] uppercase mt-0.5 border border-[#0A4226]/20 px-1 py-0.5 bg-[#0A4226]/5">
+              BUILDER ID // {builderId}
             </span>
           </div>
           <HHLogo filter={FILTER_GREEN} />
