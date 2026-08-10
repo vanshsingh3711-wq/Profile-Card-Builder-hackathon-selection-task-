@@ -9,7 +9,11 @@ export interface SharedProfile {
   role: string;
   stack: string[];
   builderTitle: string;
-  photo: string | null;
+  profilePhoto: string | null;
+  // Fallbacks for older JSON records
+  photo?: string | null;
+  version?: number;
+  cardImageUrl?: string;
 }
 
 /**
@@ -22,7 +26,7 @@ export type ShareResult =
   | {
       ok: true;
       profile: SharedProfile;
-      imageUrl: string;
+      cardImageUrl: string;
     }
   | {
       ok: false;
@@ -171,24 +175,43 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
         };
       }
 
-      // Deterministic image lookup via head()
-      const imgBlob = await findImageBlob(id);
+      // Determine cardImageUrl and profilePhoto (Backwards Compatibility)
+      let cardImageUrl = '';
+      let profilePhoto = null;
+      let pObj = profile as SharedProfile;
 
-      // Determine image URL — prefer blob URL, fall back to photo in profile
-      const imageUrl = imgBlob?.url || profile.photo || '';
-      if (!imageUrl) {
+      if (pObj.version === 2) {
+        cardImageUrl = pObj.cardImageUrl || '';
+        profilePhoto = pObj.profilePhoto || null;
+      } else {
+        // Fallback for older shares
+        const imgBlob = await findImageBlob(id);
+        cardImageUrl = imgBlob?.url || pObj.photo || '';
+        profilePhoto = null;
+      }
+
+      if (!cardImageUrl) {
         console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=IMAGE_MISSING`);
         return {
           ok: false,
           error: 'image_missing',
-          message: `No image blob or inline photo found for ID: ${id}`,
+          message: `No card image found for ID: ${id}`,
         };
       }
+
+      // Normalize the returned profile object
+      const normalizedProfile: SharedProfile = {
+        name: pObj.name,
+        role: pObj.role,
+        stack: pObj.stack,
+        builderTitle: pObj.builderTitle,
+        profilePhoto,
+      };
 
       console.log(`[share-profile] IMAGE_FOUND=true id=${id}`);
       console.log(`[share-profile] LOOKUP_SUCCESS id=${id}`);
 
-      return { ok: true, profile, imageUrl };
+      return { ok: true, profile: normalizedProfile, cardImageUrl };
     } catch (err) {
       // BlobNotFoundError from the JSON get() means the share doesn't exist
       if (err instanceof BlobNotFoundError) {
@@ -250,21 +273,26 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
     }
 
     // Check if image file exists locally
-    let imageUrl = '';
-    try {
-      await fs.access(publicImgPathJpeg);
-      imageUrl = `/shares/${id}.jpeg`;
-    } catch {
+    let cardImageUrl = '';
+    let pObj = profile as SharedProfile;
+
+    if (pObj.version === 2) {
+      cardImageUrl = pObj.cardImageUrl || '';
+    } else {
       try {
-         await fs.access(publicImgPathPng);
-         imageUrl = `/shares/${id}.png`;
+        await fs.access(publicImgPathJpeg);
+        cardImageUrl = `/shares/${id}.jpeg`;
       } catch {
-         // No local image — try inline photo from profile
-         imageUrl = profile.photo || '';
+        try {
+           await fs.access(publicImgPathPng);
+           cardImageUrl = `/shares/${id}.png`;
+        } catch {
+           cardImageUrl = pObj.photo || '';
+        }
       }
     }
 
-    if (!imageUrl) {
+    if (!cardImageUrl) {
       return {
         ok: false,
         error: 'image_missing',
@@ -272,8 +300,16 @@ export async function getSharedProfile(rawId: string): Promise<ShareResult> {
       };
     }
 
+    const normalizedProfile: SharedProfile = {
+      name: pObj.name,
+      role: pObj.role,
+      stack: pObj.stack,
+      builderTitle: pObj.builderTitle,
+      profilePhoto: pObj.version === 2 ? (pObj.profilePhoto || null) : null,
+    };
+
     console.log(`[share-profile] LOOKUP_SUCCESS id=${id} (local)`);
-    return { ok: true, profile, imageUrl };
+    return { ok: true, profile: normalizedProfile, cardImageUrl };
   } catch {
     console.log(`[share-profile] LOOKUP_FAILURE id=${id} reason=LOCAL_NOT_FOUND`);
     return {

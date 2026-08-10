@@ -268,9 +268,8 @@ export const ResultScreen: React.FC<Props> = ({
       const payloadSize = dataUrl.length;
       console.log(`[ResultScreen] Generating payload. Size: ${payloadSize} chars (~${Math.round(payloadSize * 0.75 / 1024)} KB)`);
 
-      // Strip the raw base64 photo to prevent exceeding Vercel's 4.5MB payload size limit.
-      // The server overwrites it with the Blob URL anyway.
-      const { photo: _, ...profileWithoutPhoto } = profile;
+      // Ensure the original photo is sent up to be stored as the social preview avatar.
+      const { photo, ...profileWithoutPhoto } = profile;
 
       const response = await fetch(
         '/api/share',
@@ -284,7 +283,10 @@ export const ResultScreen: React.FC<Props> = ({
 
           body: JSON.stringify({
             image: dataUrl,
-            profile: profileWithoutPhoto,
+            profile: {
+              ...profileWithoutPhoto,
+              profilePhoto: photo || null,
+            },
           }),
         }
       );

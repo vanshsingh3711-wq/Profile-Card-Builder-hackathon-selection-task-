@@ -61,7 +61,7 @@ export default async function SharePage({ params }: Props) {
      );
   }
 
-  const { imageUrl } = result;
+  const { cardImageUrl } = result;
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-hh-green text-hh-cream relative overflow-hidden bg-pattern">
@@ -78,7 +78,7 @@ export default async function SharePage({ params }: Props) {
 
         <div className="relative w-full max-w-[400px] mb-8 shadow-2xl shadow-black/50 border border-hh-yellow/20">
           <Image
-            src={imageUrl}
+            src={cardImageUrl}
             alt="Builder Card"
             width={800}
             height={1000}
@@ -96,7 +96,7 @@ export default async function SharePage({ params }: Props) {
             Create Your Own
           </Link>
           <a
-            href={imageUrl}
+            href={cardImageUrl}
             download={`HH-Goa-2026-${id}.jpeg`}
             className="flex-1 flex items-center justify-center px-6 py-4 bg-hh-pink text-white font-bold uppercase tracking-wider text-sm hover:bg-pink-600 transition-colors text-center"
           >

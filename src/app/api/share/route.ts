@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
 
       // Atomic upload: both image and JSON must succeed, or we clean up.
       let imageBlobUrl: string | null = null;
+      let photoBlobUrl: string | null = null;
 
       try {
         // Step 1: Upload image
@@ -58,9 +59,31 @@ export async function POST(req: NextRequest) {
         imageBlobUrl = imageBlob.url;
         console.log("[api/share] IMAGE_UPLOADED");
 
-        // Step 2: Upload profile JSON (include the Blob image URL)
-        const profileWithImage = { ...profile, photo: imageBlobUrl };
-        await put(`shares/${id}.json`, JSON.stringify(profileWithImage), { access: 'public' });
+        // Step 2: Upload user profile photo if it exists
+        if (profile.profilePhoto && profile.profilePhoto.startsWith('data:image')) {
+          const photoBase64 = profile.profilePhoto.replace(/^data:image\/\w+;base64,/, "");
+          const photoBuffer = Buffer.from(photoBase64, 'base64');
+          const photoBlob = await put(`shares/${id}-photo.jpeg`, photoBuffer, { access: 'public' });
+          photoBlobUrl = photoBlob.url;
+          console.log("[api/share] USER_PHOTO_UPLOADED");
+        } else if (profile.profilePhoto) {
+          // If it was already a URL (e.g. from an existing share)
+          photoBlobUrl = profile.profilePhoto;
+        }
+
+        // Step 3: Upload profile JSON (Version 2)
+        const profileData = {
+          name: profile.name,
+          role: profile.role,
+          stack: profile.stack || [],
+          builderTitle: profile.builderTitle,
+          profilePhoto: photoBlobUrl,
+          cardImageUrl: imageBlobUrl,
+          createdAt: new Date().toISOString(),
+          version: 2
+        };
+
+        await put(`shares/${id}.json`, JSON.stringify(profileData), { access: 'public' });
         console.log("[api/share] PROFILE_UPLOADED");
 
         console.log("[api/share] BEFORE_RESPONSE");
@@ -75,6 +98,14 @@ export async function POST(req: NextRequest) {
             console.log("[api/share] CLEANUP: deleted orphaned image blob");
           } catch (cleanupErr) {
             console.error('[api/share] CLEANUP_FAILED: could not delete orphaned image blob:', cleanupErr);
+          }
+        }
+        if (photoBlobUrl && photoBlobUrl.startsWith('https://')) {
+          try {
+            await del(photoBlobUrl);
+            console.log("[api/share] CLEANUP: deleted orphaned photo blob");
+          } catch (cleanupErr) {
+            console.error('[api/share] CLEANUP_FAILED: could not delete orphaned photo blob:', cleanupErr);
           }
         }
 

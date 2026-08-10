@@ -50,7 +50,7 @@ export default async function Image({ params }: Props) {
     );
   }
 
-  const { name, role, builderTitle, stack, photo } = result.profile;
+  const { name, role, builderTitle, stack, profilePhoto } = result.profile;
 
   return new ImageResponse(
     (
@@ -86,9 +86,9 @@ export default async function Image({ params }: Props) {
         <div style={{ display: 'flex', flex: 1, gap: '60px', paddingLeft: '20px' }}>
           {/* Left Column: Photo */}
           <div style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
-            {photo ? (
+            {profilePhoto ? (
               <img
-                src={photo}
+                src={profilePhoto}
                 width="300"
                 height="300"
                 style={{
