@@ -4,6 +4,7 @@ export type BuilderProfile = {
   stack: string[];
   builderTitle: string;
   photo: string | null;
+  shareId?: string;
 };
 
 export type CardStyle = 'editorial' | 'terminal' | 'goa';

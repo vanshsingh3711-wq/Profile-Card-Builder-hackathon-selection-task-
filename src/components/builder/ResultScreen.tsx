@@ -64,6 +64,10 @@ export const ResultScreen: React.FC<Props> = ({
   onEditProfile,
   onRestart,
 }) => {
+  // We need a stable share ID so the QR code matches the final share URL.
+  const [shareId] = useState(() => profile.shareId || Date.now().toString(36) + Math.random().toString(36).substring(2, 7));
+  const displayProfile = { ...profile, shareId };
+
   /*
    * IMPORTANT:
    *

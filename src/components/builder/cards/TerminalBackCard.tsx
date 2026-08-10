@@ -12,7 +12,7 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
 
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : process.env.NEXT_PUBLIC_SITE_URL || 'https://my-goa.vercel.app';
+      : process.env.NEXT_PUBLIC_SITE_URL || 'https://profile-card-builder-hackathon-selection-task-j16qlg94p.vercel.app';
     
     const safeName = profile.name?.trim().replace(/\s+/g, '-').toLowerCase() || 'builder';
     const qrUrl = `${baseUrl}/share/${safeName}`;
