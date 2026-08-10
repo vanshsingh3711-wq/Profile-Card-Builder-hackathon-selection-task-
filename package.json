@@ -12,6 +12,7 @@
     "@ai-sdk/google": "^4.0.39",
     "@ai-sdk/openai": "^4.0.36",
     "@vercel/blob": "^2.7.0",
+    "@vladmandic/face-api": "^1.7.15",
     "ai": "^7.0.58",
     "clsx": "^2.1.1",
     "framer-motion": "^13.0.0",

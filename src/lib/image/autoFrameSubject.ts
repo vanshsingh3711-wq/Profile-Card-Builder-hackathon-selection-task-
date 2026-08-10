@@ -51,9 +51,9 @@ export function autoFrameSubject(
     return { x: 0, y: 0, zoom: minZoomToCover };
   }
 
-  // Desired height of the subject in the final crop: ~110% of the container height
-  // (This makes the crop much tighter, bringing the face closer to the camera)
-  const desiredSubjectHeightInContainer = containerHeight * 1.1;
+  // Desired height of the subject in the final crop: ~45% of the container height
+  // (Since the AI now returns ONLY the face, we want the face to take up 45% of the circle)
+  const desiredSubjectHeightInContainer = containerHeight * 0.45;
   const currentSubjectHeightInContainer = subjectBox.height * baseScale;
 
   let zoom = desiredSubjectHeightInContainer / currentSubjectHeightInContainer;
@@ -61,8 +61,8 @@ export function autoFrameSubject(
   // Enforce minimum zoom so we don't have black bars (must cover the frame)
   zoom = Math.max(minZoomToCover, zoom);
   
-  // Don't zoom in too much either, say max 3x of the minZoomToCover
-  zoom = Math.min(minZoomToCover * 3, zoom);
+  // Don't zoom in too much either, say max 4x of the minZoomToCover
+  zoom = Math.min(minZoomToCover * 4, zoom);
 
   // Now calculate the required translation (x, y).
   // The center of the image in pixel space:
@@ -71,17 +71,20 @@ export function autoFrameSubject(
 
   // The center of the subject in pixel space:
   const subjectCenterX = subjectBox.x + subjectBox.width / 2;
-  // The face is typically in the top 10-20% of the upper-body bounding box.
-  // We use 0.15 to ensure the face is the absolute center of the crop.
-  const subjectCenterY = subjectBox.y + subjectBox.height * 0.15;
+  // Since the box is exactly the face, we use 0.5 to center it perfectly.
+  const subjectCenterY = subjectBox.y + subjectBox.height * 0.5;
 
-  // The difference between image center and desired subject center
-  const diffX = imageCenterX - subjectCenterX;
-  const diffY = imageCenterY - subjectCenterY;
+  // The difference between the desired subject center and the image center.
+  // In react-easy-crop, a negative translation moves the image down/right, 
+  // effectively shifting the "camera" up/left towards the subject.
+  const diffX = subjectCenterX - imageCenterX;
+  const diffY = subjectCenterY - imageCenterY;
 
-  // Scale the difference to the container size (incorporating zoom)
-  const x = diffX * baseScale * zoom;
-  const y = diffY * baseScale * zoom;
+  // Scale the translation to the base container size. 
+  // CRITICAL: react-easy-crop handles the `zoom` scale internally during rendering, 
+  // so we ONLY scale by baseScale, NOT by zoom.
+  const x = diffX * baseScale;
+  const y = diffY * baseScale;
 
   return { x, y, zoom };
 }

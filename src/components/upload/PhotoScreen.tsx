@@ -7,6 +7,7 @@ import { validateImageFile } from "@/lib/image/validateImageFile";
 import { prepareImageForValidation } from "@/lib/image/prepareImageForValidation";
 import { PhotoCropEditor } from './PhotoCropEditor';
 import { convertHeicToJpeg } from "@/lib/image/convertHeic";
+import { detectFaceLocal } from "@/lib/image/detectFaceLocal";
 
 interface Props {
   existingPhoto?: string | null;
@@ -141,28 +142,16 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
       
       setProcessingState('analyzing');
 
-      // 2. Prepare smaller image for fast validation
-      const { dataUrl: validationImageSrc, scaleFactor } = await prepareImageForValidation(file);
-      
-      // 3. Keep original image for the crop editor
+      // 2. We no longer need to resize for the backend! We can use the original image directly
+      // since the model runs locally.
       const originalObjectUrl = URL.createObjectURL(file);
       
-      // 4. Send to AI
-      const validationResponse = await fetch('/api/validate-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: validationImageSrc }),
-      });
+      // 3. Send to Local AI Model
+      const faceBox = await detectFaceLocal(originalObjectUrl);
 
-      if (!validationResponse.ok) {
-        throw new Error('Photo validation failed.');
-      }
-
-      const validation: PhotoValidationResult = await validationResponse.json();
-
-      if (!validation.valid) {
+      if (!faceBox) {
         setProcessingState(previousImageRef.current ? 'editing' : 'idle');
-        setError(validation.reason || 'Please upload a photo containing a person or character.');
+        setError('No face detected. Please upload a clear photo of a person.');
         URL.revokeObjectURL(originalObjectUrl);
         return;
       }
@@ -170,14 +159,8 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
       // Success! Move to editing
       setOriginalImageSrc(originalObjectUrl);
       
-      const scaledSubjectBox = validation.subjectBox ? {
-        x: validation.subjectBox.x * scaleFactor,
-        y: validation.subjectBox.y * scaleFactor,
-        width: validation.subjectBox.width * scaleFactor,
-        height: validation.subjectBox.height * scaleFactor,
-      } : null;
-
-      setSubjectBox(scaledSubjectBox);
+      // FaceBox is already in original image coordinates
+      setSubjectBox(faceBox);
       setProcessingState('editing');
 
     } catch (err) {
