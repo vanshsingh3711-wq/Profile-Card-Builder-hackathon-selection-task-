@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
     console.log("[api/share] AFTER_VALIDATION");
 
-    const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+    const id = profile.shareId || Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
     
     // image is base64 string "data:image/jpeg;base64,..." or "data:image/png;base64,..."
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
