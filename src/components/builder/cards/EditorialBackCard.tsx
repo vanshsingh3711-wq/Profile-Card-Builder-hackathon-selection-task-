@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BuilderProfile } from '@/types/builder';
 import QRCode from 'react-qr-code';
 import { HHLogo, FILTER_GREEN, generateBuilderId } from './card-shared';
@@ -6,14 +6,14 @@ import { HHLogo, FILTER_GREEN, generateBuilderId } from './card-shared';
 export const EditorialBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile }>(
   ({ profile }, ref) => {
     const sizeClass = 'w-full h-full';
-    const [qrUrl, setQrUrl] = useState('');
     const builderId = generateBuilderId(profile.name);
 
-    useEffect(() => {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hackerhousegoa.com';
-      const safeName = profile.name?.trim().replace(/\s+/g, '-').toLowerCase() || 'builder';
-      setQrUrl(`${origin}/share/${safeName}`);
-    }, [profile.name]);
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_SITE_URL || 'https://my-goa.vercel.app';
+    
+    const safeName = profile.name?.trim().replace(/\s+/g, '-').toLowerCase() || 'builder';
+    const qrUrl = `${baseUrl}/share/${safeName}`;
 
     return (
       <div
