@@ -35,20 +35,24 @@ export const FILTER_PINK =
 export const FILTER_MATRIX_GREEN = 
   'brightness(0) saturate(100%) invert(58%) sepia(97%) saturate(3681%) hue-rotate(85deg) brightness(108%) contrast(106%)';
 
+export const baseUrl = typeof window !== 'undefined' 
+  ? window.location.origin 
+  : process.env.NEXT_PUBLIC_SITE_URL || 'https://my-goa.vercel.app';
+
 // ─── HH Goa logo lockup (Hacker House png + Hindi "Goa" SVG overlay) ─────────
-export const HHLogo = ({ filter = FILTER_YELLOW }: { filter?: string }) => (
+export const HHLogo = ({ filter = FILTER_YELLOW, isSatori }: { filter?: string, isSatori?: boolean }) => (
   <div className="relative flex justify-center items-center w-[130px] md:w-[150px]">
     <img
-      src="/branding/Hacker house.png"
+      src={`${baseUrl}/branding/Hacker house.png`}
       alt="HACKER HOUSE"
       className="w-full h-auto object-contain"
-      style={{ filter }}
+      style={{ filter: isSatori ? undefined : filter }}
     />
     <img
-      src="/branding/goa_hindi.svg"
+      src={`${baseUrl}/branding/goa_hindi.svg`}
       alt="GOA"
       className="absolute z-10 w-[17%] top-[48%] left-[48%] -translate-x-1/2 -translate-y-1/2"
-      style={{ filter: 'drop-shadow(0px 4px 10px rgba(255,20,147,0.4))' }}
+      style={{ filter: isSatori ? undefined : 'drop-shadow(0px 4px 10px rgba(255,20,147,0.4))' }}
     />
   </div>
 );
@@ -57,4 +61,5 @@ export const HHLogo = ({ filter = FILTER_YELLOW }: { filter?: string }) => (
 export interface CardInnerProps {
   profile: BuilderProfile;
   sizeClass: string;
+  isSatori?: boolean;
 }

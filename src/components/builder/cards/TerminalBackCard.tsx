@@ -5,8 +5,8 @@ import { HHLogo, generateBuilderId } from './card-shared';
 
 const FILTER_MATRIX_GREEN = 'brightness(0) saturate(100%) invert(58%) sepia(97%) saturate(3681%) hue-rotate(85deg) brightness(108%) contrast(106%)';
 
-export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile }>(
-  ({ profile }, ref) => {
+export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: BuilderProfile; isSatori?: boolean }>(
+  ({ profile, isSatori }, ref) => {
     const sizeClass = 'w-full h-full';
     const builderId = generateBuilderId(profile.name);
 
@@ -21,13 +21,15 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
       <div
         ref={ref}
         className={`relative flex flex-col justify-between ${sizeClass} overflow-hidden font-mono bg-[#050A05] border border-[#00FF41]/20 p-4 sm:p-5 md:p-6`}
-        style={{ boxShadow: '0 0 60px rgba(0,255,65,0.08) inset' }}
+        style={{ boxShadow: isSatori ? undefined : '0 0 60px rgba(0,255,65,0.08) inset' }}
       >
         {/* CRT Scanline Overlay */}
-        <div
-          className="absolute inset-0 z-50 pointer-events-none mix-blend-overlay opacity-[0.07]"
-          style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #00FF41 2px, #00FF41 3px)' }}
-        />
+        {!isSatori && (
+          <div
+            className="absolute inset-0 z-50 pointer-events-none mix-blend-overlay opacity-[0.07]"
+            style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #00FF41 2px, #00FF41 3px)' }}
+          />
+        )}
 
         {/* Top Header */}
         <div className="relative flex justify-between items-center w-full pb-2 z-20 border-b border-[#00FF41]/15 shrink-0">
@@ -38,23 +40,27 @@ export const TerminalBackCard = React.forwardRef<HTMLDivElement, { profile: Buil
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <HHLogo filter={FILTER_MATRIX_GREEN} />
+            <HHLogo filter={FILTER_MATRIX_GREEN} isSatori={isSatori} />
           </div>
         </div>
 
         {/* Center QR */}
         <div className="relative z-20 flex flex-col items-center justify-center my-auto w-full gap-3">
-          <div className="border border-[#00FF41] p-3 bg-[#050A05]" style={{ boxShadow: '0 0 20px rgba(0,255,65,0.2)' }}>
+          <div className="border border-[#00FF41] p-3 bg-[#050A05]" style={{ boxShadow: isSatori ? undefined : '0 0 20px rgba(0,255,65,0.2)' }}>
             {qrUrl ? (
-              <QRCode
-                value={qrUrl}
-                size={140}
-                level="M"
-                bgColor="#050A05"
-                fgColor="#00FF41"
-              />
+              isSatori ? (
+                <div className="w-[140px] h-[140px] bg-[#00FF41]" style={{ display: 'flex' }} />
+              ) : (
+                <QRCode
+                  value={qrUrl}
+                  size={140}
+                  level="M"
+                  bgColor="#050A05"
+                  fgColor="#00FF41"
+                />
+              )
             ) : (
-              <div className="w-[140px] h-[140px] bg-gray-800" />
+              <div className="w-[140px] h-[140px] bg-gray-800" style={{ display: 'flex' }} />
             )}
           </div>
           <div className="text-center">
