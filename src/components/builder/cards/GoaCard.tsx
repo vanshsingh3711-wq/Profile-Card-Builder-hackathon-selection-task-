@@ -7,13 +7,14 @@
 
 import React from 'react';
 import { BadgeCheck, Zap, Sparkles } from 'lucide-react';
-import { FILTER_YELLOW, FILTER_WHITE, HHLogo, CardInnerProps } from './card-shared';
+import { FILTER_YELLOW, FILTER_WHITE, HHLogo, CardInnerProps, generateBuilderId } from './card-shared';
 import { CardPhoto } from './CardPhoto';
 
 export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
   ({ profile, sizeClass }, ref) => {
     const displayStack =
       profile.stack?.length > 0 ? profile.stack : ['NEXT.JS', 'TYPESCRIPT', 'PYTHON'];
+    const builderId = generateBuilderId(profile.name);
 
     return (
       <div
@@ -39,6 +40,9 @@ export const GoaCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
             />
             <span className="text-white/40 text-[6.5px] md:text-[7px] font-bold tracking-[0.2em] uppercase">
               GOA 2026
+            </span>
+            <span className="text-hh-yellow text-[5px] md:text-[5.5px] font-bold tracking-[0.2em] uppercase mt-0.5 border border-hh-yellow/30 px-1 py-0.5 rounded-sm bg-hh-yellow/10">
+              BUILDER ID // {builderId}
             </span>
           </div>
         </div>

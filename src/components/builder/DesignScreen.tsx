@@ -33,68 +33,82 @@ export const DesignScreen: React.FC<Props> = ({ profile, selectedStyle, onStyleS
       <div className="flex flex-col gap-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-hh-yellow/60 hover:text-hh-yellow text-xs uppercase tracking-widest font-mono transition-colors self-start"
+          className="flex items-center gap-2 text-hh-yellow/60 hover:text-hh-yellow text-[10px] font-bold uppercase tracking-[0.2em] font-mono transition-colors self-start mb-2"
         >
-          <ArrowLeft className="w-3 h-3" /> Back
+          <ArrowLeft className="w-3.5 h-3.5" /> Return
         </button>
         <div className="flex items-center gap-3">
-          <div className="h-px flex-1 bg-hh-yellow/30" />
-          <span className="font-mono text-xs uppercase tracking-[0.3em] text-hh-yellow">Step 03 / 04 · Choose Look</span>
-          <div className="h-px flex-1 bg-hh-yellow/30" />
+          <div className="h-px flex-1 bg-hh-yellow/20" />
+          <div className="flex items-center gap-2 px-3 py-1 bg-hh-yellow/5 border border-hh-yellow/20">
+            <div className="w-1.5 h-1.5 bg-hh-yellow animate-pulse" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-hh-yellow font-bold">
+              SYS.INIT // 03:04
+            </span>
+          </div>
+          <div className="h-px flex-1 bg-hh-yellow/20" />
         </div>
-        <h2 className="font-bodoni text-4xl md:text-6xl text-hh-cream uppercase leading-none">
-          Choose<br /><span className="text-hh-yellow">Your Look</span>
-        </h2>
-        <p className="font-mono text-xs text-hh-cream/50 uppercase tracking-widest">
-          All three carry the HH Goa identity. Pick the one that fits you.
-        </p>
+        <div className="text-center mt-2 mb-2">
+          <h2 className="font-bodoni text-5xl md:text-6xl text-hh-yellow uppercase leading-[0.85]">
+            Select
+            <br />
+            <span className="text-white">Design</span>
+          </h2>
+          <p className="mt-4 font-mono text-xs md:text-sm text-hh-cream/60 uppercase tracking-widest max-w-lg mx-auto leading-relaxed">
+            Identity generated successfully. Choose how it will look.
+          </p>
+        </div>
       </div>
 
       {/* Three card thumbnails */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {STYLES.map(({ id, label, subtitle }) => (
           <button
             key={id}
             onClick={() => onStyleSelected(id)}
-            className="flex flex-col gap-3 group text-left"
+            className={`flex flex-col gap-4 group text-left p-4 md:p-5 transition-all duration-300 relative border ${
+              selectedStyle === id 
+                ? 'bg-[#041008] border-hh-yellow shadow-[4px_4px_0_0_rgba(255,223,0,0.2)] scale-[1.02]' 
+                : 'bg-black/20 border-transparent hover:border-hh-yellow/30 hover:bg-black/40'
+            }`}
           >
-            {/* Card thumbnail */}
-            <div
-              className={`relative overflow-hidden transition-all duration-300 w-full aspect-[4/5] rounded-sm
-                ${selectedStyle === id
-                  ? 'ring-4 ring-hh-yellow ring-offset-2 ring-offset-[#0A4226] scale-[1.02]'
-                  : 'ring-1 ring-hh-cream/10 opacity-70 hover:opacity-100 hover:ring-hh-yellow/40'}`}
-            >
-              <BuilderCard profile={profile} style={id} />
-              
-              {/* Selection indicator */}
-              {selectedStyle === id && (
-                <div className="absolute top-3 right-3 z-30 w-6 h-6 bg-hh-yellow rounded-full shadow-md flex items-center justify-center">
-                  <div className="w-2 h-2 bg-[#0A4226] rounded-full" />
-                </div>
-              )}
+            {/* Header Area */}
+            <div className="flex items-start justify-between w-full h-8">
+               <div className={`font-bodoni text-xl md:text-2xl uppercase transition-colors ${selectedStyle === id ? 'text-hh-yellow' : 'text-white group-hover:text-hh-cream'}`}>
+                  {label}
+               </div>
+               {selectedStyle === id && (
+                 <span className="font-mono text-[9px] uppercase tracking-[0.2em] bg-hh-yellow text-[#0A4226] px-2 py-1 font-bold animate-in fade-in zoom-in duration-200">
+                   Selected
+                 </span>
+               )}
+            </div>
+            
+            {/* Description */}
+            <div className="font-mono text-[10px] uppercase tracking-widest text-hh-cream/50 -mt-2">
+              {subtitle}
             </div>
 
-            {/* Label */}
-            <div className={`flex flex-col gap-0.5 transition-colors ${selectedStyle === id ? 'text-hh-yellow' : 'text-hh-cream/50 group-hover:text-hh-cream'}`}>
-              <span className="font-bodoni text-xl uppercase">{label}</span>
-              <span className="font-mono text-[10px] uppercase tracking-widest">{subtitle}</span>
+            {/* Card thumbnail */}
+            <div className="relative w-full h-auto mt-2 border border-black shadow-xl">
+              <BuilderCard profile={profile} style={id} />
+              
+              {/* Dark overlay for unselected cards */}
+              {selectedStyle !== id && (
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-30" />
+              )}
             </div>
           </button>
         ))}
       </div>
 
       {/* CTA */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col items-center gap-4 mt-6">
         <button
           onClick={() => onStyleSelected(selectedStyle)}
-          className="w-full sm:w-auto sm:self-start px-12 py-5 bg-hh-yellow text-[#0A4226] font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white transition-colors shadow-[4px_4px_0_0_rgba(255,20,147,0.8)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(255,20,147,0.8)] transition-all"
+          className="w-full sm:w-[400px] py-6 bg-hh-pink text-white font-mono font-bold uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-hh-pink transition-all shadow-[0_0_20px_rgba(255,20,147,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
         >
-          Generate with {STYLES.find(s => s.id === selectedStyle)?.label} Style →
+          Confirm Design →
         </button>
-        <p className="font-mono text-[10px] text-hh-cream/30 uppercase tracking-widest">
-          You can switch styles on the result screen too
-        </p>
       </div>
     </div>
   );

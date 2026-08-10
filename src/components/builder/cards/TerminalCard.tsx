@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { CardInnerProps, HHLogo } from './card-shared';
+import { CardInnerProps, HHLogo, generateBuilderId } from './card-shared';
 import { CardPhoto } from './CardPhoto';
 
 // CRT Matrix Green Filter for Logos
@@ -17,6 +17,7 @@ export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
     const displayStack = profile.stack?.length > 0
       ? profile.stack
       : ['NEXT.JS', 'GEMINI API', 'SHOPIFY'];
+    const builderId = generateBuilderId(profile.name);
 
     return (
       <div
@@ -41,7 +42,7 @@ export const TerminalCard = React.forwardRef<HTMLDivElement, CardInnerProps>(
               <div className="w-2 h-2 rounded-full bg-[#28C840]" />
             </div>
             <span className="text-[#00FF41]/50 text-[6.5px] md:text-[7.5px] tracking-[0.2em] uppercase font-bold">
-              builder.id — v2.6.1
+              ID // {builderId}
             </span>
           </div>
           <div className="flex items-center gap-2">
