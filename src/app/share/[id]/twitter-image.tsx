@@ -16,21 +16,30 @@ export default async function Image({ params }: Props) {
 
   const result = await getSharedProfile(id);
 
-  if (result.ok && result.cardImageUrl) {
-    console.log(`[twitter-image] FETCHING_IMAGE url=${result.cardImageUrl}`);
-    try {
-      const res = await fetch(result.cardImageUrl);
-      if (res.ok) {
-        const contentType = res.headers.get('content-type') || 'image/png';
-        return new Response(res.body, {
-          headers: { 'Content-Type': contentType },
-        });
-      } else {
-        console.log(`[twitter-image] FETCH_FAILED status=${res.status}`);
-      }
-    } catch (e) {
-      console.log(`[twitter-image] FETCH_ERROR error=${e}`);
-    }
+  const frontUrl = result.ok ? result.cardImageUrl : null;
+  const backUrl = result.ok ? result.profile.profilePhoto : null;
+
+  if (result.ok && frontUrl) {
+    console.log(`[twitter-image] COMPOSING_IMAGE front=${frontUrl} back=${backUrl}`);
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            background: '#042f18',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '40px',
+          }}
+        >
+          <img src={frontUrl} style={{ height: '550px', objectFit: 'contain' }} />
+          {backUrl && <img src={backUrl} style={{ height: '550px', objectFit: 'contain' }} />}
+        </div>
+      ),
+      { ...size }
+    );
   }
 
   // If no profile found or fetch fails, render a fallback error card

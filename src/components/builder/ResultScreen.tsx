@@ -271,35 +271,32 @@ export const ResultScreen: React.FC<Props> = ({
       /*
        * Generate the exact same image that the user sees.
        */
-      const dataUrl = await exportCard(isFlipped ? backCardRef.current : exportCardRef.current);
+      const frontDataUrl = await exportCard(exportCardRef.current);
+      const backDataUrl = await exportCard(backCardRef.current);
 
-      if (!dataUrl) {
+      if (!frontDataUrl || !backDataUrl) {
         throw new Error(
           'Could not generate preview'
         );
       }
 
-      const payloadSize = dataUrl.length;
+      const payloadSize = frontDataUrl.length + backDataUrl.length;
       console.log(`[ResultScreen] Generating payload. Size: ${payloadSize} chars (~${Math.round(payloadSize * 0.75 / 1024)} KB)`);
 
-      // Ensure the original photo is sent up to be stored as the social preview avatar.
       const { photo, ...profileWithoutPhoto } = profile;
 
       const response = await fetch(
         '/api/share',
         {
           method: 'POST',
-
           headers: {
-            'Content-Type':
-              'application/json',
+            'Content-Type': 'application/json',
           },
-
           body: JSON.stringify({
-            image: dataUrl,
+            image: frontDataUrl,
             profile: {
               ...profileWithoutPhoto,
-              profilePhoto: photo || null,
+              profilePhoto: backDataUrl, // store the BACK card here for OG image composition
             },
           }),
         }
