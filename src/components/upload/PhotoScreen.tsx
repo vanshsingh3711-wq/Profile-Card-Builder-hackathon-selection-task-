@@ -3,10 +3,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadCloud, Loader2, AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
 import { PhotoValidationResult, SubjectBox } from "@/types/builder";
-import { validateImageFile } from "@/lib/image/validateImageFile";
-import { prepareImageForValidation } from "@/lib/image/prepareImageForValidation";
+import { normalizeImage } from "@/lib/image/normalizeImage";
 import { PhotoCropEditor } from './PhotoCropEditor';
-import { convertHeicToJpeg } from "@/lib/image/convertHeic";
 
 
 interface Props {
@@ -41,6 +39,8 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previousImageRef = useRef<string | null>(null);
+  const uploadIdRef = useRef<number>(0);
+  const activeObjectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     previousImageRef.current = originalImageSrc;
@@ -50,6 +50,9 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (activeObjectUrlRef.current) {
+        URL.revokeObjectURL(activeObjectUrlRef.current);
       }
     };
   }, []);
@@ -115,56 +118,127 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
   }, [processingState]);
 
   const processFile = useCallback(async (originalFile: File) => {
+    const currentUploadId = ++uploadIdRef.current;
+    
     setError(null);
+    setProcessingState('analyzing');
     setStatusMessageIndex(0);
     
     try {
-      let file = originalFile;
+      const tStart = performance.now();
+      console.log(`[Upload Pipeline] Processing file: ${originalFile.name}`);
       
-      // Convert HEIC/HEIF to JPEG if necessary
-      if (
-        file.name.toLowerCase().endsWith('.heic') || 
-        file.name.toLowerCase().endsWith('.heif') || 
-        file.type === 'image/heic' || 
-        file.type === 'image/heif'
-      ) {
-        setProcessingState('analyzing');
-        try {
-          file = await convertHeicToJpeg(file);
-        } catch (convertError) {
-          console.error('HEIC conversion failed:', convertError);
-          throw new Error('Failed to process HEIC image. Please try a JPG or PNG instead.');
+      // 1. Normalize and validate (handles HEIC as well)
+      const file = await normalizeImage(originalFile);
+      const tNormalized = performance.now();
+      
+      if (currentUploadId !== uploadIdRef.current) return;
+      
+      // 2. Create an object URL from the final JPEG/PNG/WebP blob
+      const objectUrl = URL.createObjectURL(file);
+      console.log(`[PHOTO VALIDATION]
+file name=${file.name}
+file type=${file.type}
+file size=${file.size}`);
+
+      console.log(`[PERSON VALIDATION]
+validation started=true`);
+
+      // 3. Send to Local AI Model for Face Detection
+      const { detectFaceLocal } = await import('@/lib/image/detectFaceLocal');
+      let faceBox = null;
+      let fallbackPersonDetection = false;
+      let accepted = false;
+      let reason = '';
+
+      try {
+        console.log('[Image Pipeline] Executing detectFaceLocal...');
+        faceBox = await detectFaceLocal(objectUrl);
+      } catch (err) {
+        console.warn(`[Image Pipeline] Face detection encountered an error:`, err);
+      }
+      
+      const tFaceDetection = performance.now();
+
+      if (faceBox) {
+        accepted = true;
+        reason = 'Human face detected';
+      } else {
+        // Run fallback person detection using Vercel AI SDK
+        console.log('[Image Pipeline] Local face detection failed. Running fallback person validation via API...');
+        const { validateImageHasPerson } = await import('@/app/actions');
+        const { prepareImageForValidation } = await import('@/lib/image/prepareImageForValidation');
+        
+        // 4. Create a smaller validation copy to avoid 413 Payload Too Large limits
+        const { file: validationFile } = await prepareImageForValidation(file);
+        
+        if (validationFile.size > 1000000) {
+           console.warn(`[Image Pipeline] Validation file is still too large: ${validationFile.size} bytes`);
+        }
+
+        const formData = new FormData();
+        formData.append('image', validationFile);
+        
+        const fallbackResult = await validateImageHasPerson(formData);
+        
+        if (fallbackResult.success && fallbackResult.data) {
+          fallbackPersonDetection = fallbackResult.data.isPerson;
+          if (fallbackPersonDetection) {
+            accepted = true;
+            reason = fallbackResult.data.reason || 'Fallback detection confirmed person';
+          } else {
+            accepted = false;
+            reason = fallbackResult.data.reason || 'No person detected';
+          }
+        } else {
+          accepted = false;
+          reason = fallbackResult.data?.reason || 'No person detected and API validation failed';
         }
       }
-
-      // 1. Basic client-side validation
-      await validateImageFile(file);
       
-      setProcessingState('analyzing');
+      const tValidation = performance.now();
 
-      // 2. We no longer need to resize for the backend! We can use the original image directly
-      // since the model runs locally.
-      const originalObjectUrl = URL.createObjectURL(file);
-      
-      // 3. Send to Local AI Model
-      const { detectFaceLocal } = await import('@/lib/image/detectFaceLocal');
-      const faceBox = await detectFaceLocal(originalObjectUrl);
+      console.log(`[PERSON VALIDATION]
+result=${accepted}
+accepted=${accepted}`);
 
+      console.log(`[UPLOAD DECISION]
+accepted=${accepted}
+reason=${reason}`);
+
+      const tTotal = tValidation - tStart;
+      console.log(`[PERF] normalize: ${(tNormalized - tStart).toFixed(0)}ms`);
+      console.log(`[PERF] face detection: ${(tFaceDetection - tNormalized).toFixed(0)}ms`);
       if (!faceBox) {
+        console.log(`[PERF] validation: ${(tValidation - tFaceDetection).toFixed(0)}ms`);
+      }
+      console.log(`[PERF] total: ${tTotal.toFixed(0)}ms`);
+
+      if (currentUploadId !== uploadIdRef.current) {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+
+      if (!accepted) {
         setProcessingState(previousImageRef.current ? 'editing' : 'idle');
-        setError('No face detected. Please upload a clear photo of a person.');
-        URL.revokeObjectURL(originalObjectUrl);
+        setError(reason === 'No person detected' ? 'Please upload a photo of a person.' : reason);
+        URL.revokeObjectURL(objectUrl);
         return;
       }
 
       // Success! Move to editing
-      setOriginalImageSrc(originalObjectUrl);
-      
-      // FaceBox is already in original image coordinates
+      if (activeObjectUrlRef.current) {
+        URL.revokeObjectURL(activeObjectUrlRef.current);
+      }
+      activeObjectUrlRef.current = objectUrl;
+
+      setOriginalImageSrc(objectUrl);
       setSubjectBox(faceBox);
       setProcessingState('editing');
 
     } catch (err) {
+      if (currentUploadId !== uploadIdRef.current) return;
+
       console.error('Photo processing error:', err);
       setProcessingState(previousImageRef.current ? 'editing' : 'idle');
       setError(
@@ -261,7 +335,7 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+            accept="image/*,.heic,.heif,image/jpeg,image/png,image/webp"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -325,7 +399,7 @@ export const PhotoScreen: React.FC<Props> = ({ existingPhoto, onPhotoSelected, o
             {!existingPhoto && (
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                accept="image/*,.heic,.heif,image/jpeg,image/png,image/webp"
                 disabled={processingState === 'analyzing'}
                 onChange={handleFileChange}
                 className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 ${isCameraActive ? 'hidden' : 'block'} disabled:cursor-wait`}

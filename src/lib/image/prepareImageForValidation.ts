@@ -7,18 +7,8 @@
  */
 export async function prepareImageForValidation(
   file: File
-): Promise<{ dataUrl: string; scaleFactor: number }> {
-  // If it's HEIC, we might need a special library or just fail gracefully 
-  // since most browsers don't support native HEIC decoding on canvas.
-  if (
-    file.type === "image/heic" ||
-    file.name.toLowerCase().endsWith(".heic")
-  ) {
-    throw new Error(
-      "HEIC format is not supported by the browser. Please upload a JPG or PNG."
-    );
-  }
-
+): Promise<{ file: File; scaleFactor: number }> {
+  const tStart = performance.now();
   const image = await loadImage(file);
   const MAX_SIZE = 1200;
 
@@ -52,14 +42,26 @@ export async function prepareImageForValidation(
 
   const scaleFactor = originalWidth / width;
 
-  // Use WebP if possible, fallback to JPEG
-  const dataUrl = canvas.toDataURL("image/webp", 0.85);
-  
-  if (dataUrl.startsWith("data:image/webp")) {
-    return { dataUrl, scaleFactor };
-  }
-  
-  return { dataUrl: canvas.toDataURL("image/jpeg", 0.85), scaleFactor };
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Failed to create blob from canvas"));
+        return;
+      }
+      const tEnd = performance.now();
+      const validationFile = new File([blob], "validation.jpg", { type: "image/jpeg" });
+      
+      console.log(`[PERF] image resize/compression: ${(tEnd - tStart).toFixed(0)}ms`);
+      console.log(`[Validation Image]
+original size=${file.size}
+validation size=${validationFile.size}
+validation type=${validationFile.type}
+width=${width}
+height=${height}`);
+      
+      resolve({ file: validationFile, scaleFactor });
+    }, "image/jpeg", 0.75);
+  });
 }
 
 export function loadImage(file: File): Promise<HTMLImageElement> {

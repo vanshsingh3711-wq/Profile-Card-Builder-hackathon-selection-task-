@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { UploadCloud } from 'lucide-react';
-import { convertHeicToJpeg } from "@/lib/image/convertHeic";
+import { normalizeImage } from "@/lib/image/normalizeImage";
 
 interface PhotoUploaderProps {
   onPhotoSelected: (photoDataUrl: string) => void;
@@ -11,18 +11,11 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ onPhotoSelected })
     let file = e.target.files?.[0];
     if (!file) return;
 
-    if (
-      file.name.toLowerCase().endsWith('.heic') || 
-      file.name.toLowerCase().endsWith('.heif') || 
-      file.type === 'image/heic' || 
-      file.type === 'image/heif'
-    ) {
-      try {
-        file = await convertHeicToJpeg(file);
-      } catch (convertError) {
-        console.error('HEIC conversion failed:', convertError);
-        return;
-      }
+    try {
+      file = await normalizeImage(file);
+    } catch (err) {
+      console.error('Image normalization failed:', err);
+      return;
     }
 
     const reader = new FileReader();
