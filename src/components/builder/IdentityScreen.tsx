@@ -140,7 +140,7 @@ export const IdentityScreen: React.FC<Props> = ({
             <div className="h-px flex-1 bg-hh-yellow/10" />
             <button
               onClick={() => setShowManual(true)}
-              className="font-mono text-xs text-hh-cream/40 uppercase tracking-widest hover:text-hh-yellow transition-colors whitespace-nowrap"
+              className="font-mono text-xs text-hh-yellow uppercase tracking-widest px-4 py-2 border border-hh-yellow/30 hover:border-hh-yellow hover:bg-hh-yellow/10 transition-all whitespace-nowrap bg-black/20"
             >
               Fill manually instead
             </button>
