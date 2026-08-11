@@ -16,11 +16,14 @@ export default async function Image({ params }: Props) {
 
   const result = await getSharedProfile(id);
 
-  const frontUrl = result.ok ? result.cardImageUrl : null;
+  const rawFrontUrl = result.ok ? result.cardImageUrl : null;
   const backUrl = result.ok ? result.profile.profilePhoto : null;
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const frontUrl = rawFrontUrl?.startsWith('/') ? `${baseUrl}${rawFrontUrl}` : rawFrontUrl;
+
   if (result.ok && frontUrl) {
-    console.log(`[og-image] COMPOSING_IMAGE front=${frontUrl} back=${backUrl}`);
+    console.log(`[og-image] COMPOSING_IMAGE front=${frontUrl} back=${backUrl ? '(data URI)' : 'null'}`);
     return new ImageResponse(
       (
         <div
