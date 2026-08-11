@@ -86,3 +86,40 @@ Requirements: MUST be ALL CAPS. Keep it concise (1-3 words). Focus on their role
     return { success: false, error: "Failed to generate title" };
   }
 }
+
+const validatePersonSchema = z.object({
+  isPerson: z.boolean().describe("True if the image contains a person, human, anime character, or humanoid figure. False if it is a QR code, object, landscape, text, or random pattern."),
+  reason: z.string().describe("Short reason for the decision, e.g. 'Contains an anime character', 'Is a QR code'")
+});
+
+export async function validateImageHasPerson(formData: FormData) {
+  try {
+    if (!process.env.OPENAI_API_KEY) throw new Error("No API key");
+
+    const file = formData.get('image') as File | null;
+    if (!file) throw new Error("No image provided");
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const result = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: validatePersonSchema,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Does this image contain a person or a character (including anime/cartoons)?' },
+            { type: 'image', image: buffer.toString('base64') }
+          ]
+        }
+      ]
+    });
+
+    return { success: true, data: result.object };
+  } catch (error) {
+    console.error("AI image validation failed:", error);
+    // On API error, we can fail closed or open. Given strict validation rules, failing closed is safer,
+    // but the user's focus is on rejecting QR codes. We'll return false if API fails.
+    return { success: false, data: { isPerson: false, reason: "Failed to validate image via API" } };
+  }
+}

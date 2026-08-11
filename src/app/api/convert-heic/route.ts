@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import heicConvert from 'heic-convert';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
